@@ -1,9 +1,119 @@
+.main {
+	width: 100%;
+	min-width: 780px;
+}
+.data-container {
+	display: flex;
+	width: 100%;
+	max-width: 1280px;
+	justify-content: space-around;
+	align-items: center;
+	margin: 0 auto;
+}
+
 .form-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 	width: 50%;
-	max-width: 40rem;
+}
+
+.form-data {
+	display: flex;
+}
+
+.month-data {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.shifts-data {
+	display: flex;
+}
+
+.employees-shifts {
+	display: flex;
+	flex-direction: column;
+	width: 40%;
 	margin: 0 auto;
+}
+label {
+	margin-top: 1rem;
+}
+
+input {
+	margin-top: 0.4rem;
+	padding: 0.2rem;
+	text-align: center;
+	font-size: 0.8rem;
+	font-weight: bold;
+}
+
+.submit {
+	padding: 0.3rem 0.5rem;
+	margin: 1.5rem 0 0.5rem;
+	cursor: pointer;
+}
+
+.shifts-container {
+	width: 50%;
+	font-size: 0.9rem;
+}
+
+.shift-line {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.shift-data {
+	padding: 0.1rem 0.3rem;
+}
+.employees-container {
+	display: flex;
+	min-width: 780px;
+	max-width: 1024px;
+	margin: 0 auto;
+}
+
+.teamleaders {
+	display: flex;
+	flex-direction: column;
+	width: 25%;
+	min-width: 12rem;
+	align-items: flex-start;
+	margin: 0 auto;
+	text-transform: uppercase;
+}
+
+.employees {
+	display: flex;
+	flex-wrap: wrap;
+	width: 75%;
+	min-width: 10rem;
+	text-transform: uppercase;
+}
+
+.teamleader,
+.employee {
+	width: 100%;
+	padding: 0.2rem 0.4rem;
+	border: 1px solid wheat;
+	border-collapse: collapse;
+	font-size: 0.8rem;
+	display: flex;
+	justify-content: space-between;
+}
+
+.employee {
+	width: 40%;
+	margin: 0 auto;
+}
+
+.employees-hours {
+	margin: 0;
+	width: 3rem;
 }
