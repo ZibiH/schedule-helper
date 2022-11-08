@@ -21,6 +21,7 @@
 
 .form-data {
 	display: flex;
+	justify-content: space-evenly;
 }
 
 .month-data {
@@ -28,18 +29,27 @@
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	text-align: center;
 }
 
 .shifts-data {
 	display: flex;
+	width: 80%;
 }
 
 .employees-shifts {
 	display: flex;
 	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 	width: 40%;
 	margin: 0 auto;
 }
+
+input {
+	width: 6rem;
+}
+
 label {
 	margin-top: 1rem;
 }
@@ -53,6 +63,7 @@ input {
 }
 
 .submit {
+	width: 5rem;
 	padding: 0.3rem 0.5rem;
 	margin: 1.5rem 0 0.5rem;
 	cursor: pointer;
@@ -82,7 +93,7 @@ input {
 .teamleaders {
 	display: flex;
 	flex-direction: column;
-	width: 25%;
+	width: 50%;
 	min-width: 12rem;
 	align-items: flex-start;
 	margin: 0 auto;
@@ -92,7 +103,7 @@ input {
 .employees {
 	display: flex;
 	flex-wrap: wrap;
-	width: 75%;
+	width: 50%;
 	min-width: 10rem;
 	text-transform: uppercase;
 }
@@ -109,7 +120,7 @@ input {
 }
 
 .employee {
-	width: 40%;
+	width: 100%;
 	margin: 0 auto;
 }
 
