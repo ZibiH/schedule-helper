@@ -86,6 +86,9 @@ function App() {
 	const [employeesArray, setEmployeesArray] = useState<Employee[]>([]);
 	const [isDisabled, setIsDisabled] = useState(true);
 
+	const [needTlOption, setNeedTlOption] = useState(false);
+	const [needEmpOption, setNeedEmpOption] = useState(false);
+
 	const tlD12Ref = useRef<HTMLInputElement>(null);
 	const tlN12Ref = useRef<HTMLInputElement>(null);
 	const tlK1Ref = useRef<HTMLInputElement>(null);
@@ -111,24 +114,13 @@ function App() {
 		add: number;
 	}>();
 
-	// useEffect(() => {
-	// 	if (!hoursRef.current?.value) return;
-	// 	if (!teamleadersCountRef.current?.value) return;
-	// 	if (!employeesCountRef.current?.value) return;
-	// 	const hours = +hoursRef.current.value;
-	// 	const numberOfTeamleaders = +teamleadersCountRef.current.value;
-	// 	const numberOfEmployees = +employeesCountRef.current.value;
-	// 	const teamleaders = createEmployeesArray('teamleader', hours, numberOfTeamleaders);
-	// 	setTeamleadersArray(teamleaders);
-	// 	setTeamleadersTotalHours(getTotalHours(teamleaders));
-	// 	const employees = createEmployeesArray('pracownik', hours, numberOfEmployees);
-	// 	setEmployeesArray(employees);
-	// 	setEmployeesTotalHours(getTotalHours(employees));
-	// }, [
-	// 	hoursRef.current?.value,
-	// 	teamleadersCountRef.current?.value,
-	// 	employeesCountRef.current?.value,
-	// ]);
+	useEffect(() => {
+		if (!teamleadersShiftsDemandArray?.length || !teamleadersShiftsAvailability) return;
+		const teamleaderShiftsDemand = teamleadersShiftsDemandArray[0];
+		if (teamleadersShiftsAvailability['12h'] < teamleaderShiftsDemand)
+			setNeedTlOption(true);
+		return () => {};
+	}, []);
 
 	const manageDisabled = () => {
 		const disabled = !!hoursRef.current?.value && !!daysRef.current?.value;
@@ -153,15 +145,16 @@ function App() {
 		const numberOfTeamleaders = +teamleadersCountRef.current.value;
 		const numberOfEmployees = +employeesCountRef.current.value;
 
+		// TEAMLEADERS DATA:
+
+		setNeedTlOption(false);
+
 		const teamleaders = createEmployeesArray('teamleader', hours, numberOfTeamleaders);
 		setTeamleadersArray(teamleaders);
-		setTeamleadersShiftsAvailability(calculateShiftsAvailability(teamleaders));
-		setTeamleadersTotalHours(getTotalHours(teamleaders));
 
-		const employees = createEmployeesArray('pracownik', hours, numberOfEmployees);
-		setEmployeesArray(employees);
-		setEmployeesShiftsAvailability(calculateShiftsAvailability(employees));
-		setEmployeesTotalHours(getTotalHours(employees));
+		const tlShiftsAvailability = calculateShiftsAvailability(teamleaders);
+		setTeamleadersShiftsAvailability(tlShiftsAvailability);
+		setTeamleadersTotalHours(getTotalHours(teamleaders));
 
 		const teamleadersShiftsData = {
 			d12: +tlD12Ref.current.value,
@@ -177,6 +170,20 @@ function App() {
 
 		setTeamleadersShiftsDemandArray(teamleadersShiftsDemand);
 
+		if (tlShiftsAvailability['12h'] < teamleadersShiftsDemand[0]) {
+			setNeedTlOption(true);
+		}
+
+		// EMPLOYEES DATA:
+		setNeedEmpOption(false);
+
+		const employees = createEmployeesArray('pracownik', hours, numberOfEmployees);
+		setEmployeesArray(employees);
+
+		const empShiftsAvailability = calculateShiftsAvailability(employees);
+		setEmployeesShiftsAvailability(empShiftsAvailability);
+		setEmployeesTotalHours(getTotalHours(employees));
+
 		const employeesShiftsData = {
 			d12: +empD12Ref.current.value,
 			n12: +empN12Ref.current.value,
@@ -190,6 +197,10 @@ function App() {
 		);
 
 		setEmployeesShiftsDemandArray(employeesShiftsDemand);
+
+		if (empShiftsAvailability['12h'] < employeesShiftsDemand[0]) {
+			setNeedEmpOption(true);
+		}
 	};
 
 	const handleShifts = (e: FormEvent) => {
@@ -204,26 +215,48 @@ function App() {
 		});
 		setEmployeesArray(newEmployeesArray);
 		setEmployeesTotalHours(getTotalHours(newEmployeesArray));
-		setEmployeesShiftsAvailability(calculateShiftsAvailability(newEmployeesArray));
+
+		const newShiftsAvailability = calculateShiftsAvailability(newEmployeesArray);
+		setEmployeesShiftsAvailability(newShiftsAvailability);
+
+		const shiftsDemand = employeesShiftsDemandArray![0];
+
+		if (newShiftsAvailability['12h'] < shiftsDemand) {
+			setNeedEmpOption(true);
+			return;
+		}
+		setNeedEmpOption(false);
 	};
 
 	const changeTeamleaderHours = (id: string, hours: number) => {
+		const newShifts = getMax12hShifts(hours);
 		const newTeamleadersArray = teamleadersArray.map((teamleader) => {
 			if (teamleader.id !== id) return teamleader;
-			return { ...teamleader, hours: hours, shifts: getMax12hShifts(hours) };
+			return { ...teamleader, hours: hours, shifts: newShifts };
 		});
 		setTeamleadersArray(newTeamleadersArray);
 		setTeamleadersTotalHours(getTotalHours(newTeamleadersArray));
-		setTeamleadersShiftsAvailability(calculateShiftsAvailability(newTeamleadersArray));
+
+		const newShiftsAvailability = calculateShiftsAvailability(newTeamleadersArray);
+		setTeamleadersShiftsAvailability(newShiftsAvailability);
+
+		const shiftsDemand = teamleadersShiftsDemandArray![0];
+
+		if (newShiftsAvailability['12h'] < shiftsDemand) {
+			setNeedTlOption(true);
+			return;
+		}
+		setNeedTlOption(false);
 	};
 
 	return (
 		<div className="main">
-			<div style={{ padding: '4px' }}></div>
+			<div style={{ padding: '1rem' }}></div>
 			<div className="data-container">
 				<form className="form-container" onSubmit={handleShifts}>
 					<div className="form-data">
-						<div className="month-data">
+						<div className="data-column">
+							<p>Podaj dane:</p>
 							<label htmlFor="hours">Godziny pracy:</label>
 							<input
 								type="number"
@@ -240,7 +273,7 @@ function App() {
 								ref={daysRef}
 								onChange={manageDisabled}
 							/>
-							<label htmlFor="teamleaders">Ilość Teamleaderów:</label>
+							<label htmlFor="teamleaders">Teamleaderzy:</label>
 							<input
 								type="number"
 								id="teamleaders"
@@ -250,7 +283,7 @@ function App() {
 								maxLength={2}
 								disabled={isDisabled}
 							/>
-							<label htmlFor="employees">Ilość pozostałych pracowników:</label>
+							<label htmlFor="employees">Pozostali:</label>
 							<input
 								type="number"
 								id="employees"
@@ -261,203 +294,233 @@ function App() {
 								disabled={isDisabled}
 							/>
 						</div>
-						<div className="shifts-data">
-							<div className="employees-shifts">
-								<p>Teamleaderzy:</p>
-								<label htmlFor="tlD12psary">D12</label>
-								<input
-									type="number"
-									id="tlD12psary"
-									defaultValue={1}
-									required
-									ref={tlD12Ref}
-								/>
-								<label htmlFor="tlN12psary">N12</label>
-								<input
-									type="number"
-									id="tlN12psary"
-									defaultValue={1}
-									required
-									ref={tlN12Ref}
-								/>
-								<label htmlFor="tlK1ktw">K1</label>
-								<input
-									type="number"
-									id="tlK1ktw"
-									defaultValue={1}
-									required
-									ref={tlK1Ref}
-								/>
-								<label htmlFor="tlK2ktw">K2</label>
-								<input
-									type="number"
-									id="tlK2ktw"
-									defaultValue={0}
-									required
-									ref={tlK2Ref}
-								/>
-							</div>
-							<div className="employees-shifts">
-								<p>Pozostali:</p>
-								<label htmlFor="empD12psary">D12</label>
-								<input
-									type="number"
-									id="empD12psary"
-									defaultValue={4}
-									required
-									ref={empD12Ref}
-								/>
-								<label htmlFor="empN12psary">N12</label>
-								<input
-									type="number"
-									id="empN12psary"
-									defaultValue={1}
-									required
-									ref={empN12Ref}
-								/>
-								<label htmlFor="empK1ktw">K1</label>
-								<input
-									type="number"
-									id="empK1ktw"
-									defaultValue={5}
-									required
-									ref={empK1Ref}
-								/>
-								<label htmlFor="empK2ktw">K2</label>
-								<input
-									type="number"
-									id="empK2ktw"
-									defaultValue={1}
-									required
-									ref={empK2Ref}
-								/>
-							</div>
+						<div className="data-column">
+							<p>Teamleaderzy:</p>
+							<label htmlFor="tlD12psary">D12</label>
+							<input
+								type="number"
+								id="tlD12psary"
+								defaultValue={1}
+								required
+								ref={tlD12Ref}
+							/>
+							<label htmlFor="tlN12psary">N12</label>
+							<input
+								type="number"
+								id="tlN12psary"
+								defaultValue={1}
+								required
+								ref={tlN12Ref}
+							/>
+							<label htmlFor="tlK1ktw">K1</label>
+							<input type="number" id="tlK1ktw" defaultValue={1} required ref={tlK1Ref} />
+							<label htmlFor="tlK2ktw">K2</label>
+							<input type="number" id="tlK2ktw" defaultValue={0} required ref={tlK2Ref} />
+						</div>
+						<div className="data-column">
+							<p>Pozostali:</p>
+							<label htmlFor="empD12psary">D12</label>
+							<input
+								type="number"
+								id="empD12psary"
+								defaultValue={4}
+								required
+								ref={empD12Ref}
+							/>
+							<label htmlFor="empN12psary">N12</label>
+							<input
+								type="number"
+								id="empN12psary"
+								defaultValue={1}
+								required
+								ref={empN12Ref}
+							/>
+							<label htmlFor="empK1ktw">K1</label>
+							<input
+								type="number"
+								id="empK1ktw"
+								defaultValue={5}
+								required
+								ref={empK1Ref}
+							/>
+							<label htmlFor="empK2ktw">K2</label>
+							<input
+								type="number"
+								id="empK2ktw"
+								defaultValue={1}
+								required
+								ref={empK2Ref}
+							/>
 						</div>
 					</div>
 					<button className="submit">OK</button>
 				</form>
 				<div className="shifts-container">
-					<div className="shift-line">
-						<p className="shift-data">Potrzebne godziny teamleadrów:</p>
-						<p className="shift-data">
-							{teamleadersShiftsDemandArray ? teamleadersShiftsDemandArray[1] : 0}
-						</p>
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Potrzebne zmiany 12h teamleadrów:</p>
-						<p className="shift-data">
-							{teamleadersShiftsDemandArray ? teamleadersShiftsDemandArray[0] : 0}
-						</p>
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Dostępne godziny teamleadrów:</p>
-						<p className="shift-data">{teamleadersTotalHours}</p>
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Dostępne zmiany 12h teamleadrów:</p>
-						{teamleadersShiftsAvailability ? (
-							<>
-								<p className="shift-data">
-									{'12h: ' + teamleadersShiftsAvailability['12h']}
-								</p>
-								<p className="shift-data">
-									{'8h: ' + teamleadersShiftsAvailability['8h']}
-								</p>
-							</>
-						) : (
-							<p className="shift-data">0</p>
-						)}
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Niewykorzystane godziny teamleadrów:</p>
-						{teamleadersShiftsAvailability ? (
-							<p className="shift-data">{teamleadersShiftsAvailability.add}</p>
-						) : (
-							<p className="shift-data">0</p>
-						)}
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Potrzebne godziny pracowników:</p>
-						<p className="shift-data">
-							{employeesShiftsDemandArray ? employeesShiftsDemandArray[1] : 0}
-						</p>
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Potrzebne zmiany 12h pracowników:</p>
-						<p className="shift-data">
-							{employeesShiftsDemandArray ? employeesShiftsDemandArray[0] : 0}
-						</p>
-					</div>
-
-					<div className="shift-line">
-						<p className="shift-data">Dostępne godziny pozostałych pracowników:</p>
-						<p className="shift-data">{employeesTotalHours}</p>
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">
-							Dostępne konfiguracje zmian pozostałych pracowników:
-						</p>
-						{employeesShiftsAvailability ? (
-							<>
-								<p className="shift-data">
-									{'12h: ' + employeesShiftsAvailability['12h']}
-								</p>
-								<p className="shift-data">{'8h: ' + employeesShiftsAvailability['8h']}</p>
-							</>
-						) : (
-							<p className="shift-data">0</p>
-						)}
-					</div>
-					<div className="shift-line">
-						<p className="shift-data">Niewykorzystane godziny pracowników:</p>
-						{employeesShiftsAvailability ? (
-							<p className="shift-data">{employeesShiftsAvailability.add}</p>
-						) : (
-							<p className="shift-data">0</p>
-						)}
-					</div>
+					<table>
+						<thead>
+							<tr>
+								<td>teamleaderzy</td>
+								<td>godziny</td>
+								<td>zmiany 12h</td>
+								<td>zmiany 8h</td>
+								<td>niewykorzystane h</td>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>zapotrzebowanie</td>
+								<td>
+									{teamleadersShiftsDemandArray ? teamleadersShiftsDemandArray[1] : 0}
+								</td>
+								<td>
+									{teamleadersShiftsDemandArray ? teamleadersShiftsDemandArray[0] : 0}
+								</td>
+								<td>x</td>
+								<td>x</td>
+							</tr>
+							<tr>
+								<td>dostępne</td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
+									{teamleadersTotalHours}
+								</td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
+									{teamleadersShiftsAvailability
+										? teamleadersShiftsAvailability['12h']
+										: 0}
+								</td>
+								<td>
+									{teamleadersShiftsAvailability
+										? teamleadersShiftsAvailability['8h']
+										: 0}
+								</td>
+								<td>
+									{teamleadersShiftsAvailability ? teamleadersShiftsAvailability.add : 0}
+								</td>
+							</tr>
+							{needTlOption ? (
+								<tr>
+									<td>opcja</td>
+									<td>{}</td>
+									<td>{}</td>
+									<td>{}</td>
+									<td>{}</td>
+								</tr>
+							) : null}
+						</tbody>
+					</table>
+					<div style={{ padding: '0.5rem' }}></div>
+					<table>
+						<thead>
+							<tr>
+								<td>pracownicy</td>
+								<td>godziny</td>
+								<td>zmiany 12h</td>
+								<td>zmiany 8h</td>
+								<td>niewykorzystane h</td>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>zapotrzebowanie</td>
+								<td>{employeesShiftsDemandArray ? employeesShiftsDemandArray[1] : 0}</td>
+								<td>{employeesShiftsDemandArray ? employeesShiftsDemandArray[0] : 0}</td>
+								<td>x</td>
+								<td>x</td>
+							</tr>
+							<tr>
+								<td>dostępne</td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
+									{employeesTotalHours}
+								</td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
+									{employeesShiftsAvailability ? employeesShiftsAvailability['12h'] : 0}
+								</td>
+								<td>
+									{employeesShiftsAvailability ? employeesShiftsAvailability['8h'] : 0}
+								</td>
+								<td>
+									{employeesShiftsAvailability ? employeesShiftsAvailability.add : 0}
+								</td>
+							</tr>
+							{needEmpOption ? (
+								<tr>
+									<td>opcja</td>
+									<td>{}</td>
+									<td>{}</td>
+									<td>{}</td>
+									<td>{}</td>
+								</tr>
+							) : null}
+						</tbody>
+					</table>
 				</div>
 			</div>
 			<div style={{ border: ' 4px solid white', margin: '1rem 0' }} />
 			<div className="employees-container">
-				<div className="teamleaders">
-					{teamleadersArray.length > 0
-						? teamleadersArray.map((teamleader) => (
-								<div className="teamleader" key={teamleader.id}>
-									<p>{teamleader.name}</p>
-									<p>{'12h: ' + teamleader.shifts['12h']}</p>
-									<p>{'8h: ' + teamleader.shifts['8h']}</p>
-									<p>{'Nieprzydzielone: ' + teamleader.shifts.add}</p>
-									<input
-										className="employees-hours"
-										defaultValue={teamleader.hours}
-										onChange={(e) =>
-											changeTeamleaderHours(teamleader.id, +e.target.value)
-										}
-									/>
-								</div>
-						  ))
-						: null}
-				</div>
-				<div style={{ padding: '12px' }} />
-
-				<div className="employees">
-					{employeesArray.length > 0
-						? employeesArray.map((employee) => (
-								<div className="employee" key={employee.id}>
-									<p>{employee.name}</p>
-									<p>{'12h: ' + employee.shifts['12h']}</p>
-									<p>{'8h: ' + employee.shifts['8h']}</p>
-									<p>{'Nieprzydzielone: ' + employee.shifts.add}</p>
-									<input
-										className="employees-hours"
-										defaultValue={employee.hours}
-										onChange={(e) => changeEmployeesHours(employee.id, +e.target.value)}
-									/>
-								</div>
-						  ))
-						: null}
-				</div>
+				<table>
+					<thead>
+						<tr>
+							<td>Funkcja</td>
+							<td>Zmiany 12h</td>
+							<td>Zmiany 8h</td>
+							<td>Nieprzydzielone</td>
+							<td>godziny pracy</td>
+						</tr>
+					</thead>
+					<tbody>
+						{teamleadersArray.length > 0
+							? teamleadersArray.map((teamleader) => (
+									<tr key={teamleader.id}>
+										<td>{teamleader.name}</td>
+										<td>{teamleader.shifts['12h']}</td>
+										<td>{teamleader.shifts['8h']}</td>
+										<td>{teamleader.shifts.add + ' h'}</td>
+										<td>
+											<input
+												className="employees-hours"
+												defaultValue={teamleader.hours}
+												onChange={(e) =>
+													changeTeamleaderHours(teamleader.id, +e.target.value)
+												}
+											/>
+										</td>
+									</tr>
+							  ))
+							: null}
+					</tbody>
+				</table>
+				<table>
+					<thead>
+						<tr>
+							<td>Funkcja</td>
+							<td>Zmiany 12h</td>
+							<td>Zmiany 8h</td>
+							<td>Nieprzydzielone</td>
+							<td>godziny pracy</td>
+						</tr>
+					</thead>
+					<tbody>
+						{employeesArray.length > 0
+							? employeesArray.map((employee) => (
+									<tr key={employee.id}>
+										<td>{employee.name}</td>
+										<td>{employee.shifts['12h']}</td>
+										<td>{employee.shifts['8h']}</td>
+										<td>{employee.shifts.add + ' h'}</td>
+										<td>
+											<input
+												className="employees-hours"
+												defaultValue={employee.hours}
+												onChange={(e) =>
+													changeEmployeesHours(employee.id, +e.target.value)
+												}
+											/>
+										</td>
+									</tr>
+							  ))
+							: null}
+					</tbody>
+				</table>
 			</div>
 		</div>
 	);
