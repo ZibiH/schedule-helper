@@ -75,6 +75,20 @@ const calculateShiftsAvailability = (shiftsArray: Employee[]) => {
 	return shiftsAvailability;
 };
 
+const getTotalNumberOfShifts = (shiftsArray: Employee[]) => {
+	const shiftsAvailability = shiftsArray.reduce(
+		(total, nextPerson) => {
+			return {
+				'12h': total['12h'] + nextPerson.shifts['12h'],
+				'8h': total['8h'] + nextPerson.shifts['8h'],
+				add: nextPerson.shifts.add + total.add,
+			};
+		},
+		{ '12h': 0, '8h': 0, add: 0 },
+	);
+	return shiftsAvailability;
+};
+
 const changeEmployeeShift = (employee: Employee) => {
 	const newEmployee = {
 		...employee,
@@ -96,14 +110,12 @@ const adjustShifts = (
 	const availableShifts =
 		currentShiftsAvailability['12h'] + currentShiftsAvailability['8h'];
 
-	console.log(numberOfShiftsNeeded >= availableShifts);
 	if (numberOfShiftsNeeded <= availableShifts) return currentEmployeesArray;
 
 	let insufficientShfitsNumber = numberOfShiftsNeeded - availableShifts;
 	const shiftsForFullMonthPerEmployeeModel = getMax12hShifts(hours);
 
 	const newEmployeesArray = currentEmployeesArray.map((employee) => {
-		console.log(insufficientShfitsNumber);
 		if (
 			employee.hours !== hours &&
 			employee.shifts['12h'] !== shiftsForFullMonthPerEmployeeModel['12h'] &&
@@ -115,7 +127,6 @@ const adjustShifts = (
 			return employee;
 		}
 	});
-	console.log('new', newEmployeesArray);
 	return newEmployeesArray;
 };
 
@@ -151,6 +162,14 @@ function App() {
 		useState<number[]>();
 
 	const [teamleadersShiftsAvailability, setTeamleadersShiftsAvailability] = useState<{
+		'12h': number;
+		'8h': number;
+		add: number;
+	}>();
+	const [
+		teamleadersOptionalShiftsAvailability,
+		setTeamleadersOptionalShiftsAvailability,
+	] = useState<{
 		'12h': number;
 		'8h': number;
 		add: number;
@@ -219,7 +238,9 @@ function App() {
 
 		if (tlShiftsAvailability['12h'] < teamleadersShiftsDemand[0]) {
 			setNeedTlOption(true);
-			adjustShifts(teamleadersShiftsDemand[0], teamleaders, hours);
+			const optionalShifts = adjustShifts(teamleadersShiftsDemand[0], teamleaders, hours);
+			const optionalShiftsTotal = calculateShiftsAvailability(optionalShifts);
+			setTeamleadersOptionalShiftsAvailability(optionalShiftsTotal);
 		}
 
 		// EMPLOYEES DATA:
@@ -292,9 +313,10 @@ function App() {
 
 		if (newShiftsAvailability['12h'] < shiftsDemand) {
 			setNeedTlOption(true);
-			const optionalArray = adjustShifts(shiftsDemand, newTeamleadersArray, hours);
-			console.log(optionalArray);
-			setOptionalTeamleadersArray(optionalArray);
+			const optionalShifts = adjustShifts(shiftsDemand, newTeamleadersArray, hours);
+			const optionalShiftsTotal = getTotalNumberOfShifts(optionalShifts);
+			setOptionalTeamleadersArray(optionalShifts);
+			setTeamleadersOptionalShiftsAvailability(optionalShiftsTotal);
 			return;
 		}
 		setNeedTlOption(false);
@@ -451,10 +473,24 @@ function App() {
 							{needTlOption ? (
 								<tr>
 									<td>opcja</td>
-									<td>{}</td>
-									<td>{}</td>
-									<td>{}</td>
-									<td>{}</td>
+									<td style={needTlOption ? { color: '#c27' } : {}}>
+										{teamleadersTotalHours}
+									</td>
+									<td>
+										{teamleadersOptionalShiftsAvailability
+											? teamleadersOptionalShiftsAvailability['12h']
+											: 0}
+									</td>
+									<td>
+										{teamleadersOptionalShiftsAvailability
+											? teamleadersOptionalShiftsAvailability['8h']
+											: 0}
+									</td>
+									<td>
+										{teamleadersOptionalShiftsAvailability
+											? teamleadersOptionalShiftsAvailability.add
+											: 0}
+									</td>
 								</tr>
 							) : null}
 						</tbody>
@@ -520,12 +556,12 @@ function App() {
 					</thead>
 					<tbody>
 						{optionalTeamleadersArray
-							? teamleadersArray.map((teamleader) => (
+							? optionalTeamleadersArray.map((teamleader) => (
 									<tr key={teamleader.id}>
 										<td>{teamleader.name}</td>
-										<td>{teamleader.shifts['12h']}</td>
-										<td>{teamleader.shifts['8h']}</td>
-										<td>{teamleader.shifts.add + ' h'}</td>
+										<td className="optional">{teamleader.shifts['12h']}</td>
+										<td className="optional">{teamleader.shifts['8h']}</td>
+										<td className="optional">{teamleader.shifts.add + ' h'}</td>
 										<td>
 											<input
 												className="employees-hours"
