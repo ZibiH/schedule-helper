@@ -3,6 +3,7 @@ export type Shift = {
 	'10h': number;
 	'8h': number;
 	add: number;
+	leave: number;
 };
 export type Employee = {
 	name: string;
@@ -18,7 +19,6 @@ export type ShiftsData = {
 	k1: number;
 	k2: number;
 	d8: number;
-	k3?: number;
 	k5: number;
 };
 
