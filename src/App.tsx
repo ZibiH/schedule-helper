@@ -5,10 +5,12 @@ import { Employee, Shift, EmployeesShiftsDemand, ShiftsData } from '../types/typ
 import {
 	getTotalHours,
 	getShiftsAvailability,
-	getOptionalShiftsAvailability,
 	getShifsDemand,
 	createBoilerplateEmployeeArray,
 	setAll10hShifts,
+	setAll8hShifts,
+	calculate12hShifts,
+	getOptionalEmployeesArray,
 } from '../utils/calcs';
 
 const TEAMLEADER = 'teamleader';
@@ -32,10 +34,12 @@ function App() {
 	const empK5Ref = useRef<HTMLInputElement>(null);
 	const empD8Ref = useRef<HTMLInputElement>(null);
 
-	const [teamleadersArray, setTeamleadersArray] = useState<Employee[]>();
-	const [optionalTeamleadersArray, setOptionalTeamleadersArray] = useState<Employee[]>();
-	const [employeesArray, setEmployeesArray] = useState<Employee[]>();
-	const [optionalEmployeesArray, setOptionalEmployeesArray] = useState<Employee[]>();
+	const [teamleadersArray, setTeamleadersArray] = useState<Employee[]>([]);
+	const [optionalTeamleadersArray, setOptionalTeamleadersArray] = useState<Employee[]>(
+		[],
+	);
+	const [employeesArray, setEmployeesArray] = useState<Employee[]>([]);
+	const [optionalEmployeesArray, setOptionalEmployeesArray] = useState<Employee[]>([]);
 
 	const [totalShiftsDemand, setTotalShiftsDemand] = useState<ShiftsData>({
 		d12: 0,
@@ -65,13 +69,23 @@ function App() {
 
 	const manageDisabled = () => {};
 
-	const teamleadersTotalHours = getTotalHours();
-	const teamleadersShiftsAvailability = getShiftsAvailability();
-	const teamleadersOptionalShiftsAvailability = getOptionalShiftsAvailability();
+	const [tlTotalHours, setTlTotalHours] = useState(getTotalHours(teamleadersArray));
 
-	const employeesTotalHours = getTotalHours();
-	const employeesShiftsAvailability = getShiftsAvailability();
-	const employeesOptionalShiftsAvailability = getOptionalShiftsAvailability();
+	const [teamleadersShiftsAvailability, setTeamleadersShiftsAvailability] = useState(
+		getShiftsAvailability(teamleadersArray),
+	);
+	const [
+		teamleadersOptionalShiftsAvailability,
+		setTeamleadersOptionalShiftsAvailability,
+	] = useState(getShiftsAvailability(optionalTeamleadersArray));
+
+	const [empTotalHours, setEmpTotalHours] = useState(getTotalHours(employeesArray));
+
+	const [employeesShiftsAvailability, setEmployeesShiftsAvailability] = useState(
+		getShiftsAvailability(employeesArray),
+	);
+	const [employeesOptionalShiftsAvailability, setEmployeesOptionalShiftsAvailability] =
+		useState(getShiftsAvailability(optionalEmployeesArray));
 
 	const handleShifts = (event: FormEvent) => {
 		event.preventDefault();
@@ -117,7 +131,41 @@ function App() {
 			emptyTeamleadersArray,
 			tlData.total10hNeeded,
 		);
-		setTeamleadersArray(teamleadersArrayWith10hShifts);
+		const teamleadersArrayWith8hShifts = setAll8hShifts(
+			teamleadersArrayWith10hShifts,
+			tlData.total8hNeeded,
+		);
+		const teamleadersWithAllShifts = calculate12hShifts(teamleadersArrayWith8hShifts);
+
+		setTeamleadersArray(teamleadersWithAllShifts);
+		const teamleadersTotalHours = getTotalHours(teamleadersWithAllShifts);
+		setTlTotalHours(teamleadersTotalHours);
+		const tlShiftsAvailability = getShiftsAvailability(teamleadersWithAllShifts);
+		setTeamleadersShiftsAvailability(tlShiftsAvailability);
+
+		if (tlData.totalHoursNeeded > teamleadersTotalHours) {
+			const numberOfTotalShiftsNeeded =
+				tlData.total12hNeeded + tlData.total10hNeeded + tlData.total8hNeeded;
+			const numberOfTotalShiftsAvailable =
+				tlShiftsAvailability['12h'] +
+				tlShiftsAvailability['10h'] +
+				tlShiftsAvailability['8h'];
+			const isOptionalCalculationNeeded =
+				numberOfTotalShiftsNeeded > numberOfTotalShiftsAvailable;
+
+			const optionalTeamleadersArray = getOptionalEmployeesArray(
+				teamleadersWithAllShifts,
+				numberOfTotalShiftsNeeded,
+				numberOfTotalShiftsAvailable,
+			);
+
+			const tlOptShiftsAvailability = getShiftsAvailability(optionalTeamleadersArray);
+			isOptionalCalculationNeeded &&
+				setTeamleadersOptionalShiftsAvailability(tlOptShiftsAvailability);
+			isOptionalCalculationNeeded &&
+				setOptionalTeamleadersArray(optionalTeamleadersArray);
+			isOptionalCalculationNeeded && setNeedTlOption(true);
+		}
 
 		const empShiftsData = {
 			count: +employeesCountRef.current.value,
@@ -143,7 +191,40 @@ function App() {
 			emptyEmployeesArray,
 			empData.total10hNeeded,
 		);
-		setEmployeesArray(employeesArrayWith10hShifts);
+		const employeesArrayWith8hShifts = setAll8hShifts(
+			employeesArrayWith10hShifts,
+			empData.total8hNeeded,
+		);
+		const employeesArrayWithAllShifts = calculate12hShifts(employeesArrayWith8hShifts);
+
+		setEmployeesArray(employeesArrayWithAllShifts);
+		const employeesTotalHours = getTotalHours(employeesArrayWithAllShifts);
+		setEmpTotalHours(employeesTotalHours);
+		const emplShiftsAvailability = getShiftsAvailability(employeesArrayWithAllShifts);
+		setEmployeesShiftsAvailability(emplShiftsAvailability);
+
+		if (empData.totalHoursNeeded > employeesTotalHours) {
+			const numberOfTotalShiftsNeeded =
+				empData.total12hNeeded + empData.total10hNeeded + empData.total8hNeeded;
+			const numberOfTotalShiftsAvailable =
+				emplShiftsAvailability['12h'] +
+				emplShiftsAvailability['10h'] +
+				emplShiftsAvailability['8h'];
+			const isOptionalCalculationNeeded =
+				numberOfTotalShiftsNeeded > numberOfTotalShiftsAvailable;
+
+			const optionalEmployeesArray = getOptionalEmployeesArray(
+				employeesArrayWithAllShifts,
+				numberOfTotalShiftsNeeded,
+				numberOfTotalShiftsAvailable,
+			);
+
+			const optEmpShiftsAvailability = getShiftsAvailability(optionalEmployeesArray);
+			isOptionalCalculationNeeded &&
+				setEmployeesOptionalShiftsAvailability(optEmpShiftsAvailability);
+			isOptionalCalculationNeeded && setOptionalEmployeesArray(optionalEmployeesArray);
+			isOptionalCalculationNeeded && setNeedEmpOption(true);
+		}
 
 		setTotalShiftsDemand({
 			d12: +tlD12Ref.current.value + +empD12Ref.current.value,
@@ -335,9 +416,7 @@ function App() {
 							</tr>
 							<tr>
 								<td>dostępne</td>
-								<td style={needTlOption ? { color: '#c27' } : {}}>
-									{teamleadersTotalHours}
-								</td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>{tlTotalHours}</td>
 								<td style={needTlOption ? { color: '#c27' } : {}}>
 									{teamleadersShiftsAvailability
 										? teamleadersShiftsAvailability['12h']
@@ -348,19 +427,19 @@ function App() {
 										? teamleadersShiftsAvailability['10h']
 										: 0}
 								</td>
-								<td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
 									{teamleadersShiftsAvailability
 										? teamleadersShiftsAvailability['8h']
 										: 0}
 								</td>
-								<td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
 									{teamleadersShiftsAvailability ? teamleadersShiftsAvailability.add : 0}
 								</td>
 							</tr>
 							{needTlOption ? (
 								<tr>
 									<td>opcja</td>
-									<td className="solution">{teamleadersTotalHours}</td>
+									<td className="solution">{tlTotalHours}</td>
 									<td className="solution">
 										{teamleadersOptionalShiftsAvailability
 											? teamleadersOptionalShiftsAvailability['12h']
@@ -414,26 +493,24 @@ function App() {
 							</tr>
 							<tr>
 								<td>dostępne</td>
-								<td style={needEmpOption ? { color: '#c27' } : {}}>
-									{employeesTotalHours}
-								</td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>{empTotalHours}</td>
 								<td style={needEmpOption ? { color: '#c27' } : {}}>
 									{employeesShiftsAvailability ? employeesShiftsAvailability['12h'] : 0}
 								</td>
-								<td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
 									{employeesShiftsAvailability ? employeesShiftsAvailability['10h'] : 0}
 								</td>
-								<td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
 									{employeesShiftsAvailability ? employeesShiftsAvailability['8h'] : 0}
 								</td>
-								<td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
 									{employeesShiftsAvailability ? employeesShiftsAvailability.add : 0}
 								</td>
 							</tr>
 							{needEmpOption ? (
 								<tr>
 									<td>opcja</td>
-									<td className="solution">{employeesTotalHours}</td>
+									<td className="solution">{empTotalHours}</td>
 									<td className="solution">
 										{employeesOptionalShiftsAvailability
 											? employeesOptionalShiftsAvailability['12h']
@@ -484,7 +561,6 @@ function App() {
 										<td className="optional">{teamleader.shifts['10h']}</td>
 										<td className="optional">{teamleader.shifts['8h']}</td>
 										<td className="optional">{teamleader.shifts.add + ' h'}</td>
-										<td className="optional">{teamleader.shifts.leave + ' h'}</td>
 										<td>
 											<input
 												className="employees-hours"
@@ -584,7 +660,6 @@ function App() {
 										<td className="optional">{employee.shifts['10h']}</td>
 										<td className="optional">{employee.shifts['8h']}</td>
 										<td className="optional">{employee.shifts.add}</td>
-										<td className="optional">{employee.shifts.leave}</td>
 										<td>
 											<input
 												className="employees-hours"
