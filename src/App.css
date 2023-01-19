@@ -148,7 +148,10 @@ label {
 
 .employees-hours {
 	margin: 0;
-	width: 3rem;
+	width: 4rem;
+	border: none;
+	background: #242424;
+	font-size: 0.8rem;
 }
 
 table {

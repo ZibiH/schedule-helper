@@ -4,6 +4,7 @@ export type Shift = {
 	'8h': number;
 	add: number;
 	leave: number;
+	over: number;
 };
 export type Employee = {
 	name: string;
@@ -21,6 +22,12 @@ export type ShiftsData = {
 	d8: number;
 	k5: number;
 };
+
+export interface MonthData extends ShiftsData {
+	count: number;
+	monthHours: number;
+	monthDays: number;
+}
 
 export type EmployeesShiftsDemand = {
 	total12hNeeded: number;

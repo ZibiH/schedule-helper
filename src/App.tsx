@@ -6,7 +6,13 @@ import {
 	getTotalHours,
 	getShiftsAvailability,
 	getOptionalShiftsAvailability,
+	getShifsDemand,
+	createBoilerplateEmployeeArray,
+	setAll10hShifts,
 } from '../utils/calcs';
+
+const TEAMLEADER = 'teamleader';
+const REGULAR_EMPLOYEE = 'pracownik';
 
 function App() {
 	const hoursRef = useRef<HTMLInputElement>(null);
@@ -99,6 +105,20 @@ function App() {
 			d8: +tlD8Ref.current.value,
 		};
 
+		const tlData = getShifsDemand(tlShiftsData);
+		setTeamleadersShiftsDemand(tlData);
+
+		const emptyTeamleadersArray = createBoilerplateEmployeeArray(
+			tlShiftsData.count,
+			TEAMLEADER,
+			tlShiftsData.monthHours,
+		);
+		const teamleadersArrayWith10hShifts = setAll10hShifts(
+			emptyTeamleadersArray,
+			tlData.total10hNeeded,
+		);
+		setTeamleadersArray(teamleadersArrayWith10hShifts);
+
 		const empShiftsData = {
 			count: +employeesCountRef.current.value,
 			monthHours: +hoursRef.current.value,
@@ -110,6 +130,20 @@ function App() {
 			k5: +empK5Ref.current.value,
 			d8: +empD8Ref.current.value,
 		};
+
+		const empData = getShifsDemand(empShiftsData);
+		setEmployeesShiftsDemand(empData);
+
+		const emptyEmployeesArray = createBoilerplateEmployeeArray(
+			empShiftsData.count,
+			REGULAR_EMPLOYEE,
+			empShiftsData.monthHours,
+		);
+		const employeesArrayWith10hShifts = setAll10hShifts(
+			emptyEmployeesArray,
+			empData.total10hNeeded,
+		);
+		setEmployeesArray(employeesArrayWith10hShifts);
 
 		setTotalShiftsDemand({
 			d12: +tlD12Ref.current.value + +empD12Ref.current.value,
@@ -125,14 +159,16 @@ function App() {
 
 	const changeLeaveHours = (id: string, hours: number) => {};
 
+	const changeOvertimeHours = (id: string, hours: number) => {};
+
 	return (
 		<div className="main">
 			<div style={{ padding: '1rem' }}></div>
 			<div className="data-container">
 				<form className="form-container" onSubmit={handleShifts}>
 					<div className="form-data">
-						<div className="data-column first">
-							<p>Podaj dane:</p>
+						<div className="data-column">
+							<p>dane:</p>
 							<label htmlFor="hours">Godziny pracy:</label>
 							<input
 								type="number"
@@ -277,7 +313,7 @@ function App() {
 								<td>12h</td>
 								<td>10h</td>
 								<td>8h</td>
-								<td>niewykorzystane h</td>
+								<td>reszta h</td>
 							</tr>
 						</thead>
 						<tbody>
@@ -358,7 +394,7 @@ function App() {
 								<td>12h</td>
 								<td>10h</td>
 								<td>8h</td>
-								<td>niewykorzystane h</td>
+								<td>reszta h</td>
 							</tr>
 						</thead>
 						<tbody>
@@ -433,9 +469,10 @@ function App() {
 							<td>12h</td>
 							<td>10h</td>
 							<td>8h</td>
-							<td>Nieprzydzielone</td>
-							<td>godziny pracy</td>
+							<td>reszta</td>
+							<td>godziny</td>
 							<td>urlop</td>
+							<td>nadgodziny</td>
 						</tr>
 					</thead>
 					<tbody>
@@ -452,6 +489,8 @@ function App() {
 											<input
 												className="employees-hours"
 												defaultValue={teamleader.hours}
+												min={0}
+												step={1}
 												onChange={(e) => changeHours(teamleader.id, +e.target.value)}
 											/>
 										</td>
@@ -459,7 +498,21 @@ function App() {
 											<input
 												className="employees-hours"
 												defaultValue={teamleader.shifts.leave}
+												min={0}
+												step={1}
 												onChange={(e) => changeLeaveHours(teamleader.id, +e.target.value)}
+											/>
+										</td>
+										<td>
+											<input
+												className="employees-hours"
+												type="number"
+												defaultValue={teamleader.shifts.over}
+												min={0}
+												step={1}
+												onChange={(e) =>
+													changeOvertimeHours(teamleader.id, +e.target.value)
+												}
 											/>
 										</td>
 									</tr>
@@ -472,20 +525,36 @@ function App() {
 										<td>{teamleader.shifts['10h']}</td>
 										<td>{teamleader.shifts['8h']}</td>
 										<td>{teamleader.shifts.add}</td>
-										<td>{teamleader.shifts.leave}</td>
 										<td>
 											<input
 												type="number"
 												className="employees-hours"
 												defaultValue={teamleader.hours}
+												min={0}
+												step={1}
 												onChange={(e) => changeHours(teamleader.id, +e.target.value)}
 											/>
 										</td>
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={teamleader.shifts.leave}
+												min={0}
+												step={1}
 												onChange={(e) => changeLeaveHours(teamleader.id, +e.target.value)}
+											/>
+										</td>
+										<td>
+											<input
+												className="employees-hours"
+												type="number"
+												defaultValue={teamleader.shifts.over}
+												min={0}
+												step={1}
+												onChange={(e) =>
+													changeOvertimeHours(teamleader.id, +e.target.value)
+												}
 											/>
 										</td>
 									</tr>
@@ -500,9 +569,10 @@ function App() {
 							<td>12h</td>
 							<td>10h</td>
 							<td>8h</td>
-							<td>Nieprzydzielone</td>
-							<td>godziny pracy</td>
+							<td>reszta</td>
+							<td>godziny</td>
 							<td>urlop</td>
+							<td>nadgodziny</td>
 						</tr>
 					</thead>
 					<tbody>
@@ -518,15 +588,33 @@ function App() {
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={employee.hours}
+												min={0}
+												step={1}
 												onChange={(e) => changeHours(employee.id, +e.target.value)}
 											/>
 										</td>
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={employee.shifts.leave}
+												min={0}
+												step={1}
 												onChange={(e) => changeLeaveHours(employee.id, +e.target.value)}
+											/>
+										</td>
+										<td>
+											<input
+												className="employees-hours"
+												type="number"
+												defaultValue={employee.shifts.over}
+												min={0}
+												step={1}
+												onChange={(e) =>
+													changeOvertimeHours(employee.id, +e.target.value)
+												}
 											/>
 										</td>
 									</tr>
@@ -542,15 +630,33 @@ function App() {
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={employee.hours}
+												min={0}
+												step={1}
 												onChange={(e) => changeHours(employee.id, +e.target.value)}
 											/>
 										</td>
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={employee.shifts.leave}
+												min={0}
+												step={1}
 												onChange={(e) => changeLeaveHours(employee.id, +e.target.value)}
+											/>
+										</td>
+										<td>
+											<input
+												className="employees-hours"
+												type="number"
+												defaultValue={employee.shifts.over}
+												min={0}
+												step={1}
+												onChange={(e) =>
+													changeOvertimeHours(employee.id, +e.target.value)
+												}
 											/>
 										</td>
 									</tr>
