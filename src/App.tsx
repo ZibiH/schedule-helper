@@ -236,7 +236,29 @@ function App() {
 		});
 	};
 
-	const changeHours = (id: string, hours: number) => {};
+	const changeHours = (id: string, hours: number) => {
+		const activeTeamleaders = needTlOption ? optionalTeamleadersArray : teamleadersArray;
+		const activeEmployees = needEmpOption ? optionalEmployeesArray : employeesArray;
+
+		const checkTeamleaders = activeTeamleaders.find((employee) => employee.id === id);
+		if (checkTeamleaders) {
+			const updatedArray = activeTeamleaders.map((teamleader) => {
+				if (teamleader.id === id) {
+					return {
+						...teamleader,
+						hours: hours,
+						hoursFor12hShifts: hours - teamleader.hours + teamleader.hoursFor12hShifts,
+					};
+				}
+				return teamleader;
+			});
+
+			needTlOption
+				? setOptionalTeamleadersArray(updatedArray)
+				: setTeamleadersArray(updatedArray);
+		}
+		console.log(activeTeamleaders);
+	};
 
 	const changeLeaveHours = (id: string, hours: number) => {};
 
@@ -564,6 +586,7 @@ function App() {
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={teamleader.hours}
 												min={0}
 												step={1}
@@ -573,6 +596,7 @@ function App() {
 										<td>
 											<input
 												className="employees-hours"
+												type="number"
 												defaultValue={teamleader.shifts.leave}
 												min={0}
 												step={1}

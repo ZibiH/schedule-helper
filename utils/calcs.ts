@@ -68,8 +68,11 @@ export const calculate12hShifts = (employees: Employee[]) => {
 	const calculatedShifts = employees.map((employee) => {
 		const hoursFor12hShifts = employee.hoursFor12hShifts;
 		const shifts = getMax12hShifs(hoursFor12hShifts);
+		const hoursToDistractFrom12hAvailability =
+			shifts['10h'] * 10 + shifts['8h'] * 8 + shifts.add;
 		return {
 			...employee,
+			hoursFor12hShifts: employee.hoursFor12hShifts - hoursToDistractFrom12hAvailability,
 			shifts: {
 				...employee.shifts,
 				'12h': employee.shifts['12h'] + shifts['12h'],
@@ -176,6 +179,7 @@ export const getOptionalEmployeesArray = (
 				numberOfShiftsToSet--;
 				return {
 					...employee,
+					hoursFor12hShifts: employee.hoursFor12hShifts - 24,
 					shifts: {
 						...employee.shifts,
 						'12h': employee.shifts['12h'] - 2,
