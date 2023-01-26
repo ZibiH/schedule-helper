@@ -4,6 +4,7 @@ import {
 	ShiftsData,
 	EmployeesShiftsDemand,
 	MonthData,
+	InitialEmployeeData,
 } from '../types/types';
 
 // HOURS
@@ -210,15 +211,23 @@ export const getOptionalEmployeesArray = (
 	return optionalEmployeesArray;
 };
 
-export const setAllShifts = (
-	employees: Employee[],
-	total10hShiftsNeeded: number,
-	total8hShiftsNeeded: number,
+export const createEmployeeArray = (
+	shiftData: InitialEmployeeData,
+	totalShiftsData: EmployeesShiftsDemand,
 ) => {
-	const employeesArrayWith10hShifts = setAll10hShifts(employees, total10hShiftsNeeded);
+	const employeesBoilerplateArray = createBoilerplateEmployeeArray(
+		shiftData.count,
+		shiftData.name,
+		shiftData.monthHours,
+	);
+
+	const employeesArrayWith10hShifts = setAll10hShifts(
+		employeesBoilerplateArray,
+		totalShiftsData.total10hNeeded,
+	);
 	const employeesArrayWith8hShifts = setAll8hShifts(
 		employeesArrayWith10hShifts,
-		total8hShiftsNeeded,
+		totalShiftsData.total8hNeeded,
 	);
 	const employeesWithAllShifts = calculate12hShifts(employeesArrayWith8hShifts);
 	return employeesWithAllShifts;
@@ -238,11 +247,11 @@ export const updateEmployeeShifts = (shifts: Shift, hours: number) => {
 
 // EMPLOYEES ARRAY
 
-export const createBoilerplateEmployeeArray = (
+function createBoilerplateEmployeeArray(
 	numberOfEmployees: number,
 	employeeType: string,
 	hours: number,
-) => {
+) {
 	const employeeArray: Employee[] = [];
 	for (let i = 0; i < numberOfEmployees; i++) {
 		const person = {
@@ -262,4 +271,4 @@ export const createBoilerplateEmployeeArray = (
 		employeeArray.push(person);
 	}
 	return employeeArray;
-};
+}

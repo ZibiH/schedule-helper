@@ -35,3 +35,16 @@ export type EmployeesShiftsDemand = {
 	total10hNeeded: number;
 	total8hNeeded: number;
 };
+
+export type InitialEmployeeData = {
+	name: string;
+	count: number;
+	monthHours: number;
+	monthDays: number;
+	d12: number;
+	n12: number;
+	k1: number;
+	k2: number;
+	k5: number;
+	d8: number;
+};
