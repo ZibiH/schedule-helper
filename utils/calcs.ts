@@ -1,4 +1,10 @@
-import { Employee, ShiftsData, EmployeesShiftsDemand, MonthData } from '../types/types';
+import {
+	Employee,
+	Shift,
+	ShiftsData,
+	EmployeesShiftsDemand,
+	MonthData,
+} from '../types/types';
 
 // HOURS
 
@@ -25,7 +31,9 @@ export const getShifsDemand = (data: MonthData) => {
 export const setAll10hShifts = (employees: Employee[], shiftDemand: number) => {
 	let numberOfShiftsToSet = shiftDemand;
 	let numberOfLoopsNeeded = Math.ceil(shiftDemand / employees.length);
-	let employeeArrayWith10hShifts = employees;
+	let employeeArrayWith10hShifts = employees.map((employee) => {
+		return { ...employee, shifts: { ...employee.shifts, '10h': 0 } };
+	});
 	while (numberOfLoopsNeeded > 0) {
 		employeeArrayWith10hShifts = employeeArrayWith10hShifts.map((employee) => {
 			if (numberOfShiftsToSet > 0) {
@@ -46,7 +54,9 @@ export const setAll10hShifts = (employees: Employee[], shiftDemand: number) => {
 export const setAll8hShifts = (employees: Employee[], shiftDemand: number) => {
 	let numberOfShiftsToSet = shiftDemand;
 	let numberOfLoopsNeeded = Math.ceil(shiftDemand / employees.length);
-	let employeeArrayWith8hShifts = employees;
+	let employeeArrayWith8hShifts = employees.map((employee) => {
+		return { ...employee, shifts: { ...employee.shifts, '8h': 0 } };
+	});
 	while (numberOfLoopsNeeded > 0) {
 		employeeArrayWith8hShifts = employeeArrayWith8hShifts.map((employee) => {
 			if (numberOfShiftsToSet > 0) {
@@ -65,7 +75,13 @@ export const setAll8hShifts = (employees: Employee[], shiftDemand: number) => {
 };
 
 export const calculate12hShifts = (employees: Employee[]) => {
-	const calculatedShifts = employees.map((employee) => {
+	const employeesArray = employees.map((employee) => {
+		return {
+			...employee,
+			shifts: { ...employee.shifts, '12h': 0 },
+		};
+	});
+	const calculatedShifts = employeesArray.map((employee) => {
 		const hoursFor12hShifts = employee.hoursFor12hShifts;
 		const shifts = getMax12hShifs(hoursFor12hShifts);
 		const hoursToDistractFrom12hAvailability =
@@ -192,6 +208,32 @@ export const getOptionalEmployeesArray = (
 		numberOfLoopsNeeded--;
 	}
 	return optionalEmployeesArray;
+};
+
+export const setAllShifts = (
+	employees: Employee[],
+	total10hShiftsNeeded: number,
+	total8hShiftsNeeded: number,
+) => {
+	const employeesArrayWith10hShifts = setAll10hShifts(employees, total10hShiftsNeeded);
+	const employeesArrayWith8hShifts = setAll8hShifts(
+		employeesArrayWith10hShifts,
+		total8hShiftsNeeded,
+	);
+	const employeesWithAllShifts = calculate12hShifts(employeesArrayWith8hShifts);
+	return employeesWithAllShifts;
+};
+
+export const updateEmployeeShifts = (shifts: Shift, hours: number) => {
+	const newShifts = getMax12hShifs(hours);
+	const updatedShifts = {
+		...shifts,
+		'12h': newShifts['12h'],
+		'10h': newShifts['10h'],
+		'8h': newShifts['8h'],
+		add: newShifts.add,
+	};
+	return updatedShifts;
 };
 
 // EMPLOYEES ARRAY

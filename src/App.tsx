@@ -1,16 +1,15 @@
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import './App.css';
 
-import { Employee, Shift, EmployeesShiftsDemand, ShiftsData } from '../types/types';
+import { Employee, EmployeesShiftsDemand, ShiftsData } from '../types/types';
 import {
 	getTotalHours,
 	getShiftsAvailability,
 	getShifsDemand,
 	createBoilerplateEmployeeArray,
-	setAll10hShifts,
-	setAll8hShifts,
-	calculate12hShifts,
 	getOptionalEmployeesArray,
+	setAllShifts,
+	updateEmployeeShifts,
 } from '../utils/calcs';
 
 const TEAMLEADER = 'teamleader';
@@ -127,21 +126,19 @@ function App() {
 			TEAMLEADER,
 			tlShiftsData.monthHours,
 		);
-		const teamleadersArrayWith10hShifts = setAll10hShifts(
+
+		const teamleadersWithAllShifts = setAllShifts(
 			emptyTeamleadersArray,
 			tlData.total10hNeeded,
-		);
-		const teamleadersArrayWith8hShifts = setAll8hShifts(
-			teamleadersArrayWith10hShifts,
 			tlData.total8hNeeded,
 		);
-		const teamleadersWithAllShifts = calculate12hShifts(teamleadersArrayWith8hShifts);
 
 		setTeamleadersArray(teamleadersWithAllShifts);
 		const teamleadersTotalHours = getTotalHours(teamleadersWithAllShifts);
 		setTlTotalHours(teamleadersTotalHours);
 		const tlShiftsAvailability = getShiftsAvailability(teamleadersWithAllShifts);
 		setTeamleadersShiftsAvailability(tlShiftsAvailability);
+		setNeedTlOption(false);
 
 		if (tlData.totalHoursNeeded > teamleadersTotalHours) {
 			const numberOfTotalShiftsNeeded =
@@ -187,21 +184,19 @@ function App() {
 			REGULAR_EMPLOYEE,
 			empShiftsData.monthHours,
 		);
-		const employeesArrayWith10hShifts = setAll10hShifts(
+
+		const employeesArrayWithAllShifts = setAllShifts(
 			emptyEmployeesArray,
 			empData.total10hNeeded,
-		);
-		const employeesArrayWith8hShifts = setAll8hShifts(
-			employeesArrayWith10hShifts,
 			empData.total8hNeeded,
 		);
-		const employeesArrayWithAllShifts = calculate12hShifts(employeesArrayWith8hShifts);
 
 		setEmployeesArray(employeesArrayWithAllShifts);
 		const employeesTotalHours = getTotalHours(employeesArrayWithAllShifts);
 		setEmpTotalHours(employeesTotalHours);
 		const emplShiftsAvailability = getShiftsAvailability(employeesArrayWithAllShifts);
 		setEmployeesShiftsAvailability(emplShiftsAvailability);
+		setNeedEmpOption(false);
 
 		if (empData.totalHoursNeeded > employeesTotalHours) {
 			const numberOfTotalShiftsNeeded =
@@ -256,8 +251,52 @@ function App() {
 			needTlOption
 				? setOptionalTeamleadersArray(updatedArray)
 				: setTeamleadersArray(updatedArray);
+			console.log(updatedArray);
+			return;
 		}
-		console.log(activeTeamleaders);
+
+		const checkEmployees = activeEmployees.find((employee) => employee.id === id);
+		if (checkEmployees) {
+			const updatedArray = activeEmployees.map((employee) => {
+				if (employee.id === id) {
+					console.log(employee.shifts);
+					const updatedShifts = updateEmployeeShifts(employee.shifts, hours);
+					console.log(updatedShifts);
+					return {
+						...employee,
+						hours: hours,
+						shifts: updatedShifts,
+					};
+				}
+				return employee;
+			});
+
+			const newShiftsAvailability = getShiftsAvailability(updatedArray);
+			const sumOfAvailableShifts =
+				newShiftsAvailability['12h'] +
+				newShiftsAvailability['10h'] +
+				newShiftsAvailability['8h'];
+			const sumOfShiftsDemand =
+				employeesShiftsDemand.total12hNeeded +
+				employeesShiftsDemand.total12hNeeded +
+				employeesShiftsDemand.total8hNeeded;
+			if (sumOfAvailableShifts < sumOfShiftsDemand) {
+				const adjustedUpdatedArray = setAllShifts(
+					updatedArray,
+					employeesShiftsDemand.total10hNeeded,
+					employeesShiftsDemand.total8hNeeded,
+				);
+				needEmpOption
+					? setOptionalEmployeesArray(adjustedUpdatedArray)
+					: setEmployeesArray(adjustedUpdatedArray);
+				return;
+			}
+
+			needEmpOption
+				? setOptionalEmployeesArray(updatedArray)
+				: setEmployeesArray(updatedArray);
+			return;
+		}
 	};
 
 	const changeLeaveHours = (id: string, hours: number) => {};
@@ -315,6 +354,7 @@ function App() {
 							<input
 								type="number"
 								id="tlD12psary"
+								min={0}
 								defaultValue={1}
 								required
 								ref={tlD12Ref}
@@ -323,20 +363,49 @@ function App() {
 							<input
 								type="number"
 								id="tlN12psary"
+								min={0}
 								defaultValue={1}
 								required
 								ref={tlN12Ref}
 							/>
 							<label htmlFor="tlK1ktw">K1</label>
-							<input type="number" id="tlK1ktw" defaultValue={1} required ref={tlK1Ref} />
+							<input
+								type="number"
+								id="tlK1ktw"
+								min={0}
+								defaultValue={1}
+								required
+								ref={tlK1Ref}
+							/>
 							<label htmlFor="tlK2ktw">K2</label>
-							<input type="number" id="tlK2ktw" defaultValue={0} required ref={tlK2Ref} />
+							<input
+								type="number"
+								id="tlK2ktw"
+								min={0}
+								defaultValue={0}
+								required
+								ref={tlK2Ref}
+							/>
 
 							<label htmlFor="tlK5ktw">K5</label>
-							<input type="number" id="tlK5ktw" defaultValue={0} required ref={tlK5Ref} />
+							<input
+								type="number"
+								id="tlK5ktw"
+								min={0}
+								defaultValue={0}
+								required
+								ref={tlK5Ref}
+							/>
 
 							<label htmlFor="tlD8ktw">D8</label>
-							<input type="number" id="tlD8ktw" defaultValue={0} required ref={tlD8Ref} />
+							<input
+								type="number"
+								id="tlD8ktw"
+								min={0}
+								defaultValue={0}
+								required
+								ref={tlD8Ref}
+							/>
 						</div>
 						<div className="data-column">
 							<p>Pozostali:</p>
@@ -344,6 +413,7 @@ function App() {
 							<input
 								type="number"
 								id="empD12psary"
+								min={0}
 								defaultValue={4}
 								required
 								ref={empD12Ref}
@@ -352,6 +422,7 @@ function App() {
 							<input
 								type="number"
 								id="empN12psary"
+								min={0}
 								defaultValue={1}
 								required
 								ref={empN12Ref}
@@ -360,6 +431,7 @@ function App() {
 							<input
 								type="number"
 								id="empK1ktw"
+								min={0}
 								defaultValue={5}
 								required
 								ref={empK1Ref}
@@ -368,7 +440,8 @@ function App() {
 							<input
 								type="number"
 								id="empK2ktw"
-								defaultValue={1}
+								min={0}
+								defaultValue={2}
 								required
 								ref={empK2Ref}
 							/>
@@ -376,6 +449,7 @@ function App() {
 							<input
 								type="number"
 								id="empK5ktw"
+								min={0}
 								defaultValue={0}
 								required
 								ref={empK5Ref}
@@ -384,6 +458,7 @@ function App() {
 							<input
 								type="number"
 								id="empD8ktw"
+								min={0}
 								defaultValue={0}
 								required
 								ref={empD8Ref}
