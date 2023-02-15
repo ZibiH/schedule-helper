@@ -9,7 +9,7 @@ export type Shift = {
 export type Employee = {
 	name: string;
 	hours: number;
-	hoursFor12hShifts: number;
+	availableHours: number;
 	id: string;
 	shifts: Shift;
 };

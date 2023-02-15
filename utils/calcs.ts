@@ -10,7 +10,10 @@ import {
 // HOURS
 
 export const getTotalHours = (employees: Employee[]) => {
-	const totalHours = employees.reduce((total, nextPerson) => total + nextPerson.hours, 0);
+	const totalHours = employees.reduce(
+		(total, nextPerson) => total + nextPerson.availableHours,
+		0,
+	);
 	return totalHours;
 };
 
@@ -41,7 +44,7 @@ export const setAll10hShifts = (employees: Employee[], shiftDemand: number) => {
 				numberOfShiftsToSet--;
 				return {
 					...employee,
-					hoursFor12hShifts: employee.hoursFor12hShifts - 10,
+					hoursFor12hShifts: employee.availableHours - 10,
 					shifts: { ...employee.shifts, '10h': employee.shifts['10h'] + 1 },
 				};
 			}
@@ -64,7 +67,7 @@ export const setAll8hShifts = (employees: Employee[], shiftDemand: number) => {
 				numberOfShiftsToSet--;
 				return {
 					...employee,
-					hoursFor12hShifts: employee.hoursFor12hShifts - 8,
+					hoursFor12hShifts: employee.availableHours - 8,
 					shifts: { ...employee.shifts, '8h': employee.shifts['8h'] + 1 },
 				};
 			}
@@ -83,13 +86,13 @@ export const calculate12hShifts = (employees: Employee[]) => {
 		};
 	});
 	const calculatedShifts = employeesArray.map((employee) => {
-		const hoursFor12hShifts = employee.hoursFor12hShifts;
+		const hoursFor12hShifts = employee.availableHours;
 		const shifts = getMax12hShifs(hoursFor12hShifts);
 		const hoursToDistractFrom12hAvailability =
 			shifts['10h'] * 10 + shifts['8h'] * 8 + shifts.add;
 		return {
 			...employee,
-			hoursFor12hShifts: employee.hoursFor12hShifts - hoursToDistractFrom12hAvailability,
+			hoursFor12hShifts: employee.availableHours - hoursToDistractFrom12hAvailability,
 			shifts: {
 				...employee.shifts,
 				'12h': employee.shifts['12h'] + shifts['12h'],
@@ -196,7 +199,7 @@ export const getOptionalEmployeesArray = (
 				numberOfShiftsToSet--;
 				return {
 					...employee,
-					hoursFor12hShifts: employee.hoursFor12hShifts - 24,
+					hoursFor12hShifts: employee.availableHours - 24,
 					shifts: {
 						...employee.shifts,
 						'12h': employee.shifts['12h'] - 2,
@@ -257,7 +260,7 @@ function createBoilerplateEmployeeArray(
 		const person = {
 			name: `${employeeType} ${i + 1}`,
 			hours: hours,
-			hoursFor12hShifts: hours,
+			availableHours: hours,
 			id: Math.random().toString(),
 			shifts: {
 				'12h': 0,
