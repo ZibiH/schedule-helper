@@ -208,53 +208,50 @@ function App() {
 		const checkTeamleaders = activeTeamleaders.find((employee) => employee.id === id);
 		const checkEmployees = activeEmployees.find((employee) => employee.id === id);
 
-		const activeEmployeesArray = checkTeamleaders
+		const activeArray = checkTeamleaders
 			? activeTeamleaders
 			: checkEmployees
 			? activeEmployees
 			: null;
 
-		if (!activeEmployeesArray) return;
+		const activeShiftsDemand = checkTeamleaders
+			? teamleadersShiftsDemand
+			: employeesShiftsDemand;
 
-		const updatedEmployeesArray = activeEmployeesArray.map((employee) => {
+		if (!activeArray) return;
+
+		const adjustedPeopleArray = activeArray.map((employee) => {
+			const clearedShifts = {
+				'12h': 0,
+				'10h': 0,
+				'8h': 0,
+				add: 0,
+			};
+			const newAvailableHours =
+				employee.hours + employee.shifts.over - employee.shifts.leave;
+			const updatedShifts = { ...employee.shifts, ...clearedShifts };
+
 			if (employee.id === id) {
-				const sumOfEmployeeShiftsHours =
-					employee.shifts['12h'] * 12 +
-					employee.shifts['10h'] * 10 +
-					employee.shifts['8h'] * 8 +
-					employee.shifts.add;
-				let newAvailableHours =
-					employee.hours + employee.shifts.over - hours - sumOfEmployeeShiftsHours;
-
-				const updatedShifts = { ...employee.shifts, leave: hours };
-
-				if (newAvailableHours < 0) {
-					const hoursToDistributeForShifts =
-						employee.hours -
-						(employee.shifts['10h'] * 10 +
-							employee.shifts['8h'] * 8 +
-							employee.shifts.add +
-							hours);
-					const updated12hShifts = getMax12hShifts(hoursToDistributeForShifts);
-					updatedShifts['12h'] = updated12hShifts['12h'];
-					updatedShifts['10h'] += updated12hShifts['10h'];
-					updatedShifts['8h'] += updated12hShifts['8h'];
-					updatedShifts.add = updated12hShifts.add;
-					newAvailableHours = updated12hShifts.add;
-				}
-
 				return {
 					...employee,
-					availableHours: newAvailableHours,
+					availableHours: newAvailableHours - hours < 0 ? 0 : newAvailableHours - hours,
 					shifts: {
 						...updatedShifts,
+						leave: hours,
 					},
 				};
 			}
-			return employee;
+			return {
+				...employee,
+				availableHours: newAvailableHours,
+				shifts: { ...updatedShifts },
+			};
 		});
 
-		console.log(updatedEmployeesArray);
+		const updatedEmployeesArray = updateEmployeesArray(
+			adjustedPeopleArray,
+			activeShiftsDemand,
+		);
 
 		const totalHours = getTotalHours(updatedEmployeesArray);
 
