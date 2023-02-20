@@ -1,20 +1,9 @@
-import {
-	Employee,
-	Shift,
-	ShiftsData,
-	EmployeesShiftsDemand,
-	MonthData,
-	InitialEmployeeData,
-} from '../types/types';
+import { Employee, Shift, EmployeesShiftsDemand, MonthData } from '../types/types';
 
 // HOURS
 
 export const getTotalHours = (employees: Employee[]) => {
-	const totalHours = employees.reduce(
-		(total, nextPerson) =>
-			total + nextPerson.hours + nextPerson.shifts.over - nextPerson.shifts.leave,
-		0,
-	);
+	const totalHours = employees.reduce((total, nextPerson) => total + nextPerson.hours, 0);
 	return totalHours;
 };
 
@@ -142,6 +131,8 @@ export const getShiftsAvailability = (employees: Employee[]) => {
 	);
 	return availableShifts;
 };
+
+// EMPLOYEES
 
 export const getOptionalEmployeesArray = (
 	employees: Employee[],

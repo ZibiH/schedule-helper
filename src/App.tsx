@@ -13,9 +13,6 @@ import {
 	getShifsDemand,
 	createBoilerplateEmployeeArray,
 	getOptionalEmployeesArray,
-	// getMax12hShifts,
-	// createEmployeeArray,
-	// updateEmployeesArray,
 	distributeShifts,
 	checkIfShiftsAreCovered,
 } from '../utils/calcs';
@@ -249,10 +246,6 @@ function App() {
 			? teamleadersShiftsDemand
 			: employeesShiftsDemand;
 
-		const activeShiftsAvailability = checkTeamleaders
-			? teamleadersShiftsAvailability
-			: employeesShiftsAvailability;
-
 		if (!activeEmployeesArray) return;
 
 		const monthHours = +hoursRef.current!.value;
@@ -290,25 +283,32 @@ function App() {
 		});
 
 		let updatedArray = distributeShifts(newArray, activeShiftsDemand);
-		if (needTlOption || needEmpOption) {
-			const { demand, availability } = checkIfShiftsAreCovered(
-				activeShiftsDemand,
-				activeShiftsAvailability,
-			);
-			updatedArray = getOptionalEmployeesArray(updatedArray, demand, availability);
-		}
-		checkTeamleaders
-			? needTlOption
-				? setOptionalTeamleadersArray(updatedArray)
-				: setTeamleadersArray(updatedArray)
-			: needEmpOption
-			? setOptionalEmployeesArray(updatedArray)
-			: setEmployeesArray(updatedArray);
-
 		const totalHours = getTotalHours(updatedArray);
+		const activeShiftsAvailability = getShiftsAvailability(updatedArray);
+		const { demand, availability, areShiftsCovered } = checkIfShiftsAreCovered(
+			activeShiftsDemand,
+			activeShiftsAvailability,
+		);
+		if (!areShiftsCovered) {
+			updatedArray = getOptionalEmployeesArray(updatedArray, demand, availability);
+			checkTeamleaders ? setNeedTlOption(true) : setNeedEmpOption(true);
+
+			checkTeamleaders
+				? setOptionalTeamleadersArray(updatedArray)
+				: setOptionalEmployeesArray(updatedArray);
+
+			checkTeamleaders
+				? (teamleadersOptionalAvailableHours = totalHours)
+				: (employeesOptionalAvailableHours = totalHours);
+
+			return;
+		}
+
+		checkTeamleaders ? setNeedTlOption(false) : setNeedEmpOption(false);
 		checkTeamleaders
-			? (teamleadersOptionalAvailableHours = totalHours)
-			: (employeesOptionalAvailableHours = totalHours);
+			? setTeamleadersArray(updatedArray)
+			: setEmployeesArray(updatedArray);
+		return;
 	};
 
 	const changeOvertimeHours = (id: string, hours: number) => {
@@ -364,14 +364,33 @@ function App() {
 			};
 		});
 
-		const updatedArray = distributeShifts(newArray, activeShiftsDemand);
-		checkTeamleaders
-			? needTlOption
+		let updatedArray = distributeShifts(newArray, activeShiftsDemand);
+		const totalHours = getTotalHours(updatedArray);
+		const activeShiftsAvailability = getShiftsAvailability(updatedArray);
+		const { demand, availability, areShiftsCovered } = checkIfShiftsAreCovered(
+			activeShiftsDemand,
+			activeShiftsAvailability,
+		);
+		if (!areShiftsCovered) {
+			updatedArray = getOptionalEmployeesArray(updatedArray, demand, availability);
+			checkTeamleaders ? setNeedTlOption(true) : setNeedEmpOption(true);
+
+			checkTeamleaders
 				? setOptionalTeamleadersArray(updatedArray)
-				: setTeamleadersArray(updatedArray)
-			: needEmpOption
-			? setOptionalEmployeesArray(updatedArray)
+				: setOptionalEmployeesArray(updatedArray);
+
+			checkTeamleaders
+				? (teamleadersOptionalAvailableHours = totalHours)
+				: (employeesOptionalAvailableHours = totalHours);
+
+			return;
+		}
+		checkTeamleaders ? setNeedTlOption(false) : setNeedEmpOption(false);
+
+		checkTeamleaders
+			? setTeamleadersArray(updatedArray)
 			: setEmployeesArray(updatedArray);
+		return;
 	};
 
 	return (
