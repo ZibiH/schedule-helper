@@ -11,17 +11,20 @@ import {
 	getTotalHours,
 	getShiftsAvailability,
 	getShifsDemand,
-	getOptionalEmployeesArray,
-	getMax12hShifts,
-	createEmployeeArray,
-	updateEmployeesArray,
-	checkIfShiftsAreCovered,
+	createBoilerplateEmployeeArray,
+	// getOptionalEmployeesArray,
+	// getMax12hShifts,
+	// createEmployeeArray,
+	// updateEmployeesArray,
+	// checkIfShiftsAreCovered,
+	distributeShifts,
 } from '../utils/calcs';
 
 const TEAMLEADER = 'teamleader';
 const REGULAR_EMPLOYEE = 'pracownik';
 
 function App() {
+	// FORM DATA
 	const hoursRef = useRef<HTMLInputElement>(null);
 	const daysRef = useRef<HTMLInputElement>(null);
 	const teamleadersCountRef = useRef<HTMLInputElement>(null);
@@ -39,13 +42,39 @@ function App() {
 	const empK5Ref = useRef<HTMLInputElement>(null);
 	const empD8Ref = useRef<HTMLInputElement>(null);
 
+	// TEAMLEADERS STATES AND DATA
+
 	const [teamleadersArray, setTeamleadersArray] = useState<Employee[]>([]);
 	const [optionalTeamleadersArray, setOptionalTeamleadersArray] = useState<Employee[]>(
 		[],
 	);
+	const [teamleadersShiftsDemand, setTeamleadersShiftsDemand] =
+		useState<EmployeesShiftsDemand>({
+			total12hNeeded: 0,
+			totalHoursNeeded: 0,
+			total10hNeeded: 0,
+			total8hNeeded: 0,
+		});
+	const [needTlOption, setNeedTlOption] = useState(false);
+
+	const teamleadersTotalHoursNeeded = teamleadersShiftsDemand.totalHoursNeeded;
+	let teamleaderslTotalAvailableHours = getTotalHours(teamleadersArray);
+	const teamleadersShiftsAvailability = getShiftsAvailability(teamleadersArray);
+	const teamleadersOptionalShiftsAvailability = getShiftsAvailability(
+		optionalTeamleadersArray,
+	);
+
+	// OTHER EMPLOYEES STATES AND DATA
+
 	const [employeesArray, setEmployeesArray] = useState<Employee[]>([]);
 	const [optionalEmployeesArray, setOptionalEmployeesArray] = useState<Employee[]>([]);
-
+	const [employeesShiftsDemand, setEmployeesShiftsDemand] =
+		useState<EmployeesShiftsDemand>({
+			total12hNeeded: 0,
+			totalHoursNeeded: 0,
+			total10hNeeded: 0,
+			total8hNeeded: 0,
+		});
 	const [totalShiftsDemand, setTotalShiftsDemand] = useState<ShiftsData>({
 		d12: 0,
 		n12: 0,
@@ -54,39 +83,15 @@ function App() {
 		d8: 0,
 		k5: 0,
 	});
-	const [teamleadersShiftsDemand, setTeamleadersShiftsDemand] =
-		useState<EmployeesShiftsDemand>({
-			total12hNeeded: 0,
-			totalHoursNeeded: 0,
-			total10hNeeded: 0,
-			total8hNeeded: 0,
-		});
-	const [employeesShiftsDemand, setEmployeesShiftsDemand] =
-		useState<EmployeesShiftsDemand>({
-			total12hNeeded: 0,
-			totalHoursNeeded: 0,
-			total10hNeeded: 0,
-			total8hNeeded: 0,
-		});
-	const [isDisabled, setIsDisabled] = useState(false);
-	const [needTlOption, setNeedTlOption] = useState(false);
 	const [needEmpOption, setNeedEmpOption] = useState(false);
 
-	const teamleadersTotalHoursNeeded = teamleadersShiftsDemand.totalHoursNeeded;
 	const employeesTotalHoursNeeded = employeesShiftsDemand.totalHoursNeeded;
-
-	let tlTotalHours = getTotalHours(teamleadersArray);
-
-	const teamleadersShiftsAvailability = getShiftsAvailability(teamleadersArray);
-	const teamleadersOptionalShiftsAvailability = getShiftsAvailability(
-		optionalTeamleadersArray,
-	);
-
-	let empTotalHours = getTotalHours(employeesArray);
-
+	let employeesTotalAvailableHours = getTotalHours(employeesArray);
 	const employeesShiftsAvailability = getShiftsAvailability(employeesArray);
 	const employeesOptionalShiftsAvailability =
 		getShiftsAvailability(optionalEmployeesArray);
+
+	// FORM HANDLING
 
 	const handleShifts = (event: FormEvent) => {
 		event.preventDefault();
@@ -135,30 +140,19 @@ function App() {
 			d8: +tlD8Ref.current.value,
 		};
 
-		const tlDemandData = getShifsDemand(tlShiftsData);
-		setTeamleadersShiftsDemand(tlDemandData);
+		const teamleadersDemandData = getShifsDemand(tlShiftsData);
+		setTeamleadersShiftsDemand(teamleadersDemandData);
 
-		const teamleadersWithAllShifts = createEmployeeArray(tlShiftsData, tlDemandData);
-		setTeamleadersArray(teamleadersWithAllShifts);
-
-		const tlShiftsAvailability = getShiftsAvailability(teamleadersWithAllShifts);
-		tlTotalHours = getTotalHours(teamleadersWithAllShifts);
-
-		if (tlDemandData.totalHoursNeeded > tlTotalHours) {
-			const { areShiftsCovered, demand, availability } = checkIfShiftsAreCovered(
-				tlDemandData,
-				tlShiftsAvailability,
-			);
-
-			const optionalTeamleadersArray = getOptionalEmployeesArray(
-				teamleadersWithAllShifts,
-				demand,
-				availability,
-			);
-
-			!areShiftsCovered && setOptionalTeamleadersArray(optionalTeamleadersArray);
-			!areShiftsCovered && setNeedTlOption(true);
-		}
+		const bolierplateTeamleadersArray = createBoilerplateEmployeeArray(
+			tlShiftsData.count,
+			tlShiftsData.name,
+			tlShiftsData.monthHours,
+		);
+		const teamleadersArrayWithShifts = distributeShifts(
+			bolierplateTeamleadersArray,
+			teamleadersDemandData,
+		);
+		setTeamleadersArray(teamleadersArrayWithShifts);
 
 		// EMPLOYEES DATA
 
@@ -175,165 +169,24 @@ function App() {
 			d8: +empD8Ref.current.value,
 		};
 
-		const empDemandData = getShifsDemand(empShiftsData);
-		setEmployeesShiftsDemand(empDemandData);
+		const employeesDemandData = getShifsDemand(empShiftsData);
+		setEmployeesShiftsDemand(employeesDemandData);
 
-		const employeesArrayWithAllShifts = createEmployeeArray(empShiftsData, empDemandData);
-
-		setEmployeesArray(employeesArrayWithAllShifts);
-		const empTotalHours = getTotalHours(employeesArrayWithAllShifts);
-		const emplShiftsAvailability = getShiftsAvailability(employeesArrayWithAllShifts);
-
-		if (empDemandData.totalHoursNeeded > empTotalHours) {
-			const { areShiftsCovered, demand, availability } = checkIfShiftsAreCovered(
-				empDemandData,
-				emplShiftsAvailability,
-			);
-
-			const optionalEmployeesArray = getOptionalEmployeesArray(
-				employeesArrayWithAllShifts,
-				demand,
-				availability,
-			);
-
-			!areShiftsCovered && setOptionalEmployeesArray(optionalEmployeesArray);
-			!areShiftsCovered && setNeedEmpOption(true);
-		}
-	};
-
-	const changeLeaveHours = (id: string, hours: number) => {
-		const activeTeamleaders = needTlOption ? optionalTeamleadersArray : teamleadersArray;
-		const activeEmployees = needEmpOption ? optionalEmployeesArray : employeesArray;
-
-		const checkTeamleaders = activeTeamleaders.find((employee) => employee.id === id);
-		const checkEmployees = activeEmployees.find((employee) => employee.id === id);
-
-		const activeArray = checkTeamleaders
-			? activeTeamleaders
-			: checkEmployees
-			? activeEmployees
-			: null;
-
-		const activeShiftsDemand = checkTeamleaders
-			? teamleadersShiftsDemand
-			: employeesShiftsDemand;
-
-		if (!activeArray) return;
-
-		const adjustedPeopleArray = activeArray.map((employee) => {
-			const clearedShifts = {
-				'12h': 0,
-				'10h': 0,
-				'8h': 0,
-				add: 0,
-			};
-			const newAvailableHours =
-				employee.hours + employee.shifts.over - employee.shifts.leave;
-			const updatedShifts = { ...employee.shifts, ...clearedShifts };
-
-			if (employee.id === id) {
-				return {
-					...employee,
-					availableHours: newAvailableHours - hours < 0 ? 0 : newAvailableHours - hours,
-					shifts: {
-						...updatedShifts,
-						leave: hours,
-					},
-				};
-			}
-			return {
-				...employee,
-				availableHours: newAvailableHours,
-				shifts: { ...updatedShifts },
-			};
-		});
-
-		const updatedEmployeesArray = updateEmployeesArray(
-			adjustedPeopleArray,
-			activeShiftsDemand,
+		const boilerplateEmployeesArray = createBoilerplateEmployeeArray(
+			empShiftsData.count,
+			empShiftsData.name,
+			empShiftsData.monthHours,
 		);
-
-		const totalHours = getTotalHours(updatedEmployeesArray);
-
-		if (!!checkTeamleaders) {
-			tlTotalHours = totalHours;
-			needTlOption
-				? setOptionalTeamleadersArray(updatedEmployeesArray)
-				: setTeamleadersArray(updatedEmployeesArray);
-		}
-
-		if (!!checkEmployees) {
-			empTotalHours = totalHours;
-			needEmpOption
-				? setOptionalEmployeesArray(updatedEmployeesArray)
-				: setEmployeesArray(updatedEmployeesArray);
-		}
+		const employeesArrayWithShifts = distributeShifts(
+			boilerplateEmployeesArray,
+			employeesDemandData,
+		);
+		setEmployeesArray(employeesArrayWithShifts);
 	};
 
-	const changeOvertimeHours = (id: string, hours: number) => {
-		const activeTeamleaders = needTlOption ? optionalTeamleadersArray : teamleadersArray;
-		const activeEmployees = needEmpOption ? optionalEmployeesArray : employeesArray;
+	const changeLeaveHours = (id: string, hours: number) => {};
 
-		const checkTeamleaders = activeTeamleaders.find((employee) => employee.id === id);
-		const checkEmployees = activeEmployees.find((employee) => employee.id === id);
-
-		const activeEmployeesArray = checkTeamleaders
-			? activeTeamleaders
-			: checkEmployees
-			? activeEmployees
-			: null;
-
-		if (!activeEmployeesArray) return;
-
-		const updatedEmployeesArray = activeEmployeesArray.map((employee) => {
-			if (employee.id === id) {
-				const sumOfEmployeeShiftsHours =
-					employee.shifts['12h'] * 12 +
-					employee.shifts['10h'] * 10 +
-					employee.shifts['8h'] * 8 +
-					employee.shifts.add;
-				const newAvailableHours =
-					employee.hours +
-					hours -
-					employee.shifts.leave -
-					sumOfEmployeeShiftsHours +
-					employee.shifts.add;
-				return {
-					...employee,
-					availableHours: newAvailableHours,
-					shifts: {
-						...employee.shifts,
-						over: hours,
-					},
-				};
-			}
-			return employee;
-		});
-
-		const totalHours = getTotalHours(updatedEmployeesArray);
-
-		if (!!checkTeamleaders) {
-			const newEmployeesArray = updateEmployeesArray(
-				updatedEmployeesArray,
-				teamleadersShiftsDemand,
-			);
-			tlTotalHours = totalHours;
-			needTlOption
-				? setOptionalTeamleadersArray(newEmployeesArray)
-				: setTeamleadersArray(newEmployeesArray);
-		}
-
-		if (!!checkEmployees) {
-			const newEmployeesArray = updateEmployeesArray(
-				updatedEmployeesArray,
-				employeesShiftsDemand,
-			);
-			empTotalHours = totalHours;
-			needEmpOption
-				? setOptionalEmployeesArray(newEmployeesArray)
-				: setEmployeesArray(newEmployeesArray);
-		}
-	};
+	const changeOvertimeHours = (id: string, hours: number) => {};
 
 	return (
 		<div className="main">
@@ -355,7 +208,6 @@ function App() {
 								ref={teamleadersCountRef}
 								max={99}
 								maxLength={2}
-								disabled={isDisabled}
 							/>
 							<label htmlFor="employees">Pozostali:</label>
 							<input
@@ -365,7 +217,6 @@ function App() {
 								ref={employeesCountRef}
 								max={99}
 								maxLength={2}
-								disabled={isDisabled}
 							/>
 						</div>
 						<div className="data-column">
@@ -531,7 +382,9 @@ function App() {
 							</tr>
 							<tr>
 								<td>dostępne</td>
-								<td style={needTlOption ? { color: '#c27' } : {}}>{tlTotalHours}</td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
+									{teamleaderslTotalAvailableHours}
+								</td>
 								<td style={needTlOption ? { color: '#c27' } : {}}>
 									{teamleadersShiftsAvailability
 										? teamleadersShiftsAvailability['12h']
@@ -554,7 +407,7 @@ function App() {
 							{needTlOption ? (
 								<tr>
 									<td>opcja</td>
-									<td className="solution">{tlTotalHours}</td>
+									<td className="solution">{teamleaderslTotalAvailableHours}</td>
 									<td className="solution">
 										{teamleadersOptionalShiftsAvailability
 											? teamleadersOptionalShiftsAvailability['12h']
@@ -606,7 +459,9 @@ function App() {
 							</tr>
 							<tr>
 								<td>dostępne</td>
-								<td style={needEmpOption ? { color: '#c27' } : {}}>{empTotalHours}</td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
+									{employeesTotalAvailableHours}
+								</td>
 								<td style={needEmpOption ? { color: '#c27' } : {}}>
 									{employeesShiftsAvailability ? employeesShiftsAvailability['12h'] : 0}
 								</td>
@@ -623,7 +478,7 @@ function App() {
 							{needEmpOption ? (
 								<tr>
 									<td>opcja</td>
-									<td className="solution">{empTotalHours}</td>
+									<td className="solution">{employeesTotalAvailableHours}</td>
 									<td className="solution">
 										{employeesOptionalShiftsAvailability
 											? employeesOptionalShiftsAvailability['12h']
