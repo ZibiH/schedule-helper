@@ -123,6 +123,11 @@ export function getMax12hShifts(hours: number) {
 		add: 0,
 	};
 
+	if (hours < 8) {
+		shifts.add = hours;
+		return shifts;
+	}
+
 	if (hours % 12 === 0) {
 		shifts['12h'] = hours / 12;
 	}
@@ -206,33 +211,33 @@ export const getShiftsAvailability = (employees: Employee[]) => {
 	return availableShifts;
 };
 
-// export const getOptionalEmployeesArray = (
-// 	employees: Employee[],
-// 	shiftsNeeded: number,
-// 	shiftsAvailable: number,
-// ) => {
-// 	let numberOfShiftsToSet = shiftsNeeded - shiftsAvailable;
-// 	let numberOfLoopsNeeded = Math.ceil(numberOfShiftsToSet / employees.length);
-// 	let optionalEmployeesArray = employees;
-// 	while (numberOfLoopsNeeded > 0) {
-// 		optionalEmployeesArray = optionalEmployeesArray.map((employee) => {
-// 			if (numberOfShiftsToSet > 0) {
-// 				numberOfShiftsToSet--;
-// 				return {
-// 					...employee,
-// 					shifts: {
-// 						...employee.shifts,
-// 						'12h': employee.shifts['12h'] - 2,
-// 						'8h': employee.shifts['8h'] + 3,
-// 					},
-// 				};
-// 			}
-// 			return employee;
-// 		});
-// 		numberOfLoopsNeeded--;
-// 	}
-// 	return optionalEmployeesArray;
-// };
+export const getOptionalEmployeesArray = (
+	employees: Employee[],
+	shiftsNeeded: number,
+	shiftsAvailable: number,
+) => {
+	let numberOfShiftsToSet = shiftsNeeded - shiftsAvailable;
+	let numberOfLoopsNeeded = Math.ceil(numberOfShiftsToSet / employees.length);
+	let optionalEmployeesArray = employees;
+	while (numberOfLoopsNeeded > 0) {
+		optionalEmployeesArray = optionalEmployeesArray.map((employee) => {
+			if (numberOfShiftsToSet > 0 && employee.shifts['12h'] > 1) {
+				numberOfShiftsToSet--;
+				return {
+					...employee,
+					shifts: {
+						...employee.shifts,
+						'12h': employee.shifts['12h'] - 2,
+						'8h': employee.shifts['8h'] + 3,
+					},
+				};
+			}
+			return employee;
+		});
+		numberOfLoopsNeeded--;
+	}
+	return optionalEmployeesArray;
+};
 
 function distributeMaximumHours(employee: Employee) {
 	const availableHours = employee.availableHours;
