@@ -1,247 +1,276 @@
-import { Employee, ShiftsData, EmployeesShiftsDemand } from '../types/types';
+import { Employee, Shift, EmployeesShiftsDemand, MonthData } from '../types/types';
 
-export const getMax12hShifts = (hours: number, employee: Employee) => {
-	const full12hShiftsNumber = hours / 12;
-	if (hours < 8)
-		return {
-			'12h': 0,
-			'10h': employee.shifts['10h'],
-			'8h': employee.shifts['8h'],
-			add: hours,
-		};
-	if (hours % 12 === 8)
-		return {
-			'12h': Math.floor(full12hShiftsNumber),
-			'10h': employee.shifts['10h'],
-			'8h': 1 + employee.shifts['8h'],
-			add: 0,
-		};
-	if (hours % 12 === 4)
-		return {
-			'12h': Math.floor(full12hShiftsNumber) - 1,
-			'10h': employee.shifts['10h'],
-			'8h': 2 + employee.shifts['8h'],
-			add: 0,
-		};
-	if (hours % 12 === 0)
-		return {
-			'12h': Math.floor(full12hShiftsNumber),
-			'10h': employee.shifts['10h'],
-			'8h': employee.shifts['8h'],
-			add: 0,
-		};
-	if (hours % 12 > 8) {
-		return {
-			'12h': Math.floor(full12hShiftsNumber),
-			'10h': employee.shifts['10h'],
-			'8h': 1 + employee.shifts['8h'],
-			add: (hours % 12) - 8,
-		};
-	}
-	return {
-		'12h': Math.floor(full12hShiftsNumber),
-		'10h': employee.shifts['10h'],
-		'8h': employee.shifts['8h'],
-		add: hours % 12,
-	};
+// HOURS
+
+export const getTotalHours = (employees: Employee[]) => {
+	const totalHours = employees.reduce((total, nextPerson) => total + nextPerson.hours, 0);
+	return totalHours;
 };
 
-export const createEmployeesArray = (
-	name: string,
-	hours: number,
-	hoursFor12hShifts: number,
-	count: number,
+// SHIFTS
+
+export const getShifsDemand = (data: MonthData) => {
+	const shiftsData = {
+		total12hNeeded: (data.d12 + data.n12 + data.k1 + data.k2) * data.monthDays,
+		total10hNeeded: data.k5 * data.monthDays,
+		total8hNeeded: data.d8 * data.monthDays,
+		totalHoursNeeded:
+			(data.d12 + data.n12 + data.k1 + data.k2) * data.monthDays * 12 +
+			data.k5 * data.monthDays * 10 +
+			data.d8 * data.monthDays * 8,
+	};
+	return shiftsData;
+};
+
+export const checkIfShiftsAreCovered = (
+	shiftsNeeded: EmployeesShiftsDemand,
+	shiftsAvailable: Shift,
 ) => {
-	const array: Employee[] = [];
-	for (let i = 0; i < count; i++) {
-		const shifts = {
+	const demand =
+		shiftsNeeded.total12hNeeded +
+		shiftsNeeded.total10hNeeded +
+		shiftsNeeded.total8hNeeded;
+	const availability =
+		shiftsAvailable['12h'] + shiftsAvailable['10h'] + shiftsAvailable['8h'];
+	const areShiftsCovered = availability >= demand;
+	return { demand, availability, areShiftsCovered };
+};
+
+export function getMax12hShifts(hours: number) {
+	const shifts = {
+		'12h': 0,
+		'10h': 0,
+		'8h': 0,
+		add: 0,
+	};
+
+	if (hours < 8) {
+		shifts.add = hours;
+		return shifts;
+	}
+
+	if (hours % 12 === 0) {
+		shifts['12h'] = hours / 12;
+	}
+
+	if (hours % 12 === 2) {
+		shifts['12h'] = Math.floor(hours / 12) - 1;
+		shifts['10h'] = 1;
+	}
+
+	if (hours % 12 === 4) {
+		shifts['12h'] = Math.floor(hours / 12) - 1;
+		shifts['8h'] = 2;
+	}
+
+	if (hours % 12 === 6) {
+		shifts['12h'] = Math.floor(hours / 12) - 1;
+		shifts['10h'] = 1;
+		shifts['8h'] = 1;
+	}
+
+	if (hours % 12 === 8) {
+		shifts['12h'] = Math.floor(hours / 12);
+		shifts['8h'] = 1;
+	}
+
+	if (hours % 12 === 10) {
+		shifts['12h'] = Math.floor(hours / 12);
+		shifts['10h'] = 1;
+	}
+
+	if (hours % 2 === 1) {
+		const adjustedShifts = getMax12hShifts(hours - 1);
+		shifts['12h'] = adjustedShifts['12h'];
+		shifts['10h'] = adjustedShifts['10h'];
+		shifts['8h'] = adjustedShifts['8h'];
+		shifts.add = 1;
+	}
+
+	if (shifts.add > 1) {
+		const adjustedShifts = getMax12hShifts(shifts.add);
+		shifts['12h'] = adjustedShifts['12h'] + shifts['12h'];
+		shifts['10h'] = adjustedShifts['10h'] + shifts['10h'];
+		shifts['8h'] = adjustedShifts['8h'] + shifts['8h'];
+		shifts.add = adjustedShifts.add;
+	}
+	return shifts;
+}
+
+export const getShiftsAvailability = (employees: Employee[]) => {
+	if (!employees.length)
+		return {
 			'12h': 0,
 			'10h': 0,
 			'8h': 0,
 			add: 0,
+			leave: 0,
+			over: 0,
 		};
-		const person = {
-			name: name,
-			hours: hours,
-			hoursFor12hShifts: hoursFor12hShifts,
-			id: Math.random().toString(),
-			shifts,
-		};
-		person.shifts = getMax12hShifts(hours, person);
-		array.push(person);
-	}
-	return array;
-};
 
-export const getTotalHours = (array: Employee[]) => {
-	return array.reduce((total, employee) => {
-		return total + employee.hours;
-	}, 0);
-};
-
-export const calculateShiftsDemand = (shifts: ShiftsData, days: number) => {
-	const numberOf10hShiftsNeeded = shifts.k5 * days;
-	const numberOf8hShiftsNeeded = shifts.d8 * days;
-
-	const numberOf12hShiftsNeeded =
-		(shifts.d12 + shifts.k1 + shifts.k2 + shifts.n12) * days;
-	const hoursNeeded = numberOf12hShiftsNeeded * 12;
-
-	return {
-		total12hNeeded: numberOf12hShiftsNeeded,
-		totalHoursNeeded: hoursNeeded,
-		total10hNeeded: numberOf10hShiftsNeeded,
-		total8hNeeded: numberOf8hShiftsNeeded,
-	};
-};
-
-export const calculateShiftsAvailability = (shiftsArray: Employee[]) => {
-	const shiftsAvailability = shiftsArray.reduce(
+	const availableShifts = employees.reduce(
 		(total, nextPerson) => {
-			const shifts = getMax12hShifts(nextPerson.hoursFor12hShifts, nextPerson);
-			return {
-				'12h': total['12h'] + shifts['12h'],
-				'10h': total['10h'] + shifts['10h'],
-				'8h': total['8h'] + shifts['8h'],
-				add: shifts.add + total.add,
-			};
-		},
-		{ '12h': 0, '10h': 0, '8h': 0, add: 0 },
-	);
-	return shiftsAvailability;
-};
-
-export const getTotalNumberOfShifts = (shiftsArray: Employee[]) => {
-	const shiftsAvailability = shiftsArray.reduce(
-		(total, nextPerson) => {
-			return {
+			const shiftsSummary = {
 				'12h': total['12h'] + nextPerson.shifts['12h'],
 				'10h': total['10h'] + nextPerson.shifts['10h'],
 				'8h': total['8h'] + nextPerson.shifts['8h'],
-				add: nextPerson.shifts.add + total.add,
+				add: total.add + nextPerson.availableHours,
+				leave: total.leave + nextPerson.shifts.leave,
+				over: total.over + nextPerson.shifts.over,
 			};
+			return shiftsSummary;
 		},
-		{ '12h': 0, '10h': 0, '8h': 0, add: 0 },
+		{
+			'12h': 0,
+			'10h': 0,
+			'8h': 0,
+			add: 0,
+			leave: 0,
+			over: 0,
+		},
 	);
-	return shiftsAvailability;
+	return availableShifts;
 };
 
-export const changeEmployeeShift = (employee: Employee) => {
-	const newEmployee = {
-		...employee,
-		shifts: {
-			'12h': employee.shifts['12h'] - 2,
-			'10h': employee.shifts['10h'],
-			'8h': employee.shifts['8h'] + 3,
-			add: employee.shifts.add,
-		},
-	};
+// EMPLOYEES
 
-	if (newEmployee.shifts.add < 4) {
-		return newEmployee;
-	}
-	const adjustedEmployee = {
-		...newEmployee,
-		shifts: {
-			'12h': newEmployee.shifts['12h'] + 1,
-			'10h': employee.shifts['10h'],
-			'8h': newEmployee.shifts['8h'] - 1,
-			add: newEmployee.shifts.add - 4,
-		},
-	};
-
-	return adjustedEmployee;
-};
-
-export const adjustShifts = (
-	numberOfShiftsNeeded: number,
-	currentEmployeesArray: Employee[],
-) => {
-	const currentShiftsAvailability = calculateShiftsAvailability(currentEmployeesArray);
-	const availableShifts =
-		currentShiftsAvailability['12h'] + currentShiftsAvailability['8h'];
-
-	if (numberOfShiftsNeeded <= availableShifts) return currentEmployeesArray;
-
-	let insufficientShfitsNumber = numberOfShiftsNeeded - availableShifts;
-
-	const newEmployeesArray = currentEmployeesArray.map((employee) => {
-		if (insufficientShfitsNumber > 0) {
-			insufficientShfitsNumber--;
-			return changeEmployeeShift(employee);
-		} else {
-			return employee;
-		}
-	});
-
-	if (insufficientShfitsNumber === 0) {
-		return newEmployeesArray;
-	} else {
-		const newArray = newEmployeesArray.map((employee) => {
-			if (insufficientShfitsNumber > 0) {
-				insufficientShfitsNumber--;
-				return changeEmployeeShift(employee);
-			} else {
-				return employee;
-			}
-		});
-		return newArray;
-	}
-};
-
-const TEN_HOURS_SHIFT = '10h';
-const EIGHT_HOURS_SHIFT = '8h';
-
-const adjustNon12hShifts = (employee: Employee, shift: string) => {
-	if (shift === TEN_HOURS_SHIFT) {
-		const newEmployee = {
-			...employee,
-			hoursFor12hShifts: employee.hoursFor12hShifts - 10,
-			shifts: { ...employee.shifts, '10h': employee.shifts['10h'] + 1 },
-		};
-		return newEmployee;
-	}
-
-	if (shift === EIGHT_HOURS_SHIFT) {
-		const newEmployee = {
-			...employee,
-			hoursFor12hShifts: employee.hoursFor12hShifts - 8,
-			shifts: { ...employee.shifts, '8h': employee.shifts['8h'] + 1 },
-		};
-		return newEmployee;
-	}
-
-	return employee;
-};
-
-export const calculateAvailableHoursFor12hShiftsOnly = (
+export const getOptionalEmployeesArray = (
 	employees: Employee[],
-	shiftsDemand: EmployeesShiftsDemand,
+	shiftsNeeded: number,
+	shiftsAvailable: number,
 ) => {
-	let numberOf10hShiftsNeeded = shiftsDemand.total10hNeeded;
-	let numberOf8hShiftsNeeded = shiftsDemand.total8hNeeded;
-	let adjustedEmployeesArray = employees;
-	while (numberOf10hShiftsNeeded > 0) {
-		adjustedEmployeesArray = adjustedEmployeesArray.map((employee) => {
-			if (numberOf10hShiftsNeeded === 0) return employee;
-			let newEmployee = employee;
-			if (numberOf10hShiftsNeeded > 0) {
-				newEmployee = adjustNon12hShifts(employee, TEN_HOURS_SHIFT);
-				numberOf10hShiftsNeeded--;
+	let numberOfShiftsToSet = shiftsNeeded - shiftsAvailable;
+	let numberOfLoopsNeeded = Math.ceil(numberOfShiftsToSet / employees.length);
+	let optionalEmployeesArray = employees;
+	while (numberOfLoopsNeeded > 0) {
+		optionalEmployeesArray = optionalEmployeesArray.map((employee) => {
+			if (numberOfShiftsToSet > 0 && employee.shifts['12h'] > 1) {
+				numberOfShiftsToSet--;
+				return {
+					...employee,
+					shifts: {
+						...employee.shifts,
+						'12h': employee.shifts['12h'] - 2,
+						'8h': employee.shifts['8h'] + 3,
+					},
+				};
 			}
-			return newEmployee;
+			return employee;
 		});
+		numberOfLoopsNeeded--;
 	}
-	while (numberOf8hShiftsNeeded > 0) {
-		adjustedEmployeesArray = adjustedEmployeesArray.map((employee) => {
-			if (numberOf8hShiftsNeeded === 0) return employee;
-			let newEmployee = employee;
-			if (numberOf8hShiftsNeeded > 0) {
-				newEmployee = adjustNon12hShifts(employee, EIGHT_HOURS_SHIFT);
-				numberOf8hShiftsNeeded--;
-			}
-			return newEmployee;
-		});
-	}
-	return adjustedEmployeesArray;
+	return optionalEmployeesArray;
 };
+
+function distributeMaximumHours(employee: Employee) {
+	const availableHours = employee.availableHours;
+	const max12hShifts = getMax12hShifts(availableHours);
+	return max12hShifts;
+}
+
+function distribute8hShifts(employeesArray: Employee[], numberOfShifts: number) {
+	let numberOfShiftsToAssign = numberOfShifts;
+	let numberOfLoopsNeeded = Math.ceil(numberOfShifts / employeesArray.length);
+	let newArray = employeesArray;
+	while (numberOfLoopsNeeded > 0) {
+		newArray = newArray.map((employee) => {
+			if (numberOfShiftsToAssign > 0 && employee.availableHours >= 8) {
+				numberOfShiftsToAssign--;
+				return {
+					...employee,
+					availableHours: employee.availableHours - 8,
+					shifts: { ...employee.shifts, '8h': employee.shifts['8h'] + 1 },
+				};
+			}
+			return employee;
+		});
+		numberOfLoopsNeeded--;
+	}
+
+	return newArray;
+}
+
+function distribute10hShifts(employeesArray: Employee[], numberOfShifts: number) {
+	let numberOfShiftsToAssign = numberOfShifts;
+	let numberOfLoopsNeeded = Math.ceil(numberOfShifts / employeesArray.length);
+	let newArray = employeesArray;
+	while (numberOfLoopsNeeded > 0) {
+		newArray = newArray.map((employee) => {
+			if (numberOfShiftsToAssign > 0 && employee.availableHours >= 10) {
+				numberOfShiftsToAssign--;
+				return {
+					...employee,
+					availableHours: employee.availableHours - 10,
+					shifts: { ...employee.shifts, '10h': employee.shifts['10h'] + 1 },
+				};
+			}
+			return employee;
+		});
+		numberOfLoopsNeeded--;
+	}
+
+	return newArray;
+}
+
+function distribute12hShifts(employeesArray: Employee[]) {
+	const newArray = employeesArray.map((employee) => {
+		const additionalShifts = distributeMaximumHours(employee);
+
+		return {
+			...employee,
+			availableHours: additionalShifts.add,
+			shifts: {
+				...employee.shifts,
+				'12h': additionalShifts['12h'],
+				'10h': employee.shifts['10h'] + additionalShifts['10h'],
+				'8h': employee.shifts['8h'] + additionalShifts['8h'],
+			},
+		};
+	});
+	return newArray;
+}
+
+export function distributeShifts(
+	employeesArray: Employee[],
+	shiftDemand: EmployeesShiftsDemand,
+) {
+	const arrayWith8hShiftsDistributed = distribute8hShifts(
+		employeesArray,
+		shiftDemand.total8hNeeded,
+	);
+	const arrayWith10hShiftsDistributed = distribute10hShifts(
+		arrayWith8hShiftsDistributed,
+		shiftDemand.total10hNeeded,
+	);
+	const arrayWith12hShiftsDistributed = distribute12hShifts(
+		arrayWith10hShiftsDistributed,
+	);
+
+	return arrayWith12hShiftsDistributed;
+}
+
+export function createBoilerplateEmployeeArray(
+	numberOfEmployees: number,
+	employeeType: string,
+	hours: number,
+) {
+	const employeeArray: Employee[] = [];
+	for (let i = 0; i < numberOfEmployees; i++) {
+		const person = {
+			name: `${employeeType} ${i + 1}`,
+			hours: hours,
+			availableHours: hours,
+			id: Math.random().toString(),
+			shifts: {
+				'12h': 0,
+				'10h': 0,
+				'8h': 0,
+				add: 0,
+				leave: 0,
+				over: 0,
+			},
+		};
+		employeeArray.push(person);
+	}
+	return employeeArray;
+}

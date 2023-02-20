@@ -35,23 +35,21 @@ p {
 .data-column {
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
+	justify-content: flex-start;
 	align-items: center;
 	text-align: center;
-	width: 25%;
+	width: 8.5rem;
 	min-width: 6.5rem;
-	margin: 0 auto;
-	padding: 1rem;
+	margin: 0.2rem;
+	padding: 1rem 2rem;
 	background-color: #333;
+	border: 1px solid #cccc7799;
+	box-shadow: 1px 1px 4px #cccc7799;
 	border-radius: 0.3rem;
 }
 
-.data-column:first-of-type {
-	margin-right: 1rem;
-}
-
 .data-column:last-of-type {
-	width: 15%;
+	font-weight: bolder;
 }
 
 .shifts-data {
@@ -60,7 +58,16 @@ p {
 }
 
 input {
-	width: 6rem;
+	width: 5rem;
+	border: none;
+	border-bottom: 2px #cc7 solid;
+	padding-left: 1rem;
+	background-color: #333;
+	margin: 0.2rem;
+	text-align: center;
+	font-size: 1rem;
+	font-weight: bold;
+	padding-bottom: 0.3rem;
 }
 
 label {
@@ -69,18 +76,10 @@ label {
 	text-transform: uppercase;
 }
 
-input {
-	margin-top: 0.4rem;
-	padding: 0.2rem;
-	text-align: center;
-	font-size: 0.8rem;
-	font-weight: bold;
-}
-
 .summary {
-	margin-top: 0.4rem;
-	font-size: 1rem;
-	border-bottom: 1px solid wheat;
+	margin-top: 0.2rem;
+	font-size: 1.2rem;
+	border-bottom: 3px solid wheat;
 	width: 100%;
 	color: #48e;
 }
@@ -93,7 +92,14 @@ input {
 	width: 5rem;
 	padding: 0.3rem 0.5rem;
 	margin: 1.5rem 0 0.5rem;
+	border: 1px #cccc7799 solid;
+	box-shadow: 1px 1px 4px #cccc7799;
+	border-radius: 4px;
 	cursor: pointer;
+}
+
+.submit:hover {
+	opacity: 0.8;
 }
 
 .shifts-container {
@@ -147,7 +153,10 @@ input {
 
 .employees-hours {
 	margin: 0;
-	width: 3rem;
+	width: 4rem;
+	border: none;
+	background: #242424;
+	font-size: 0.8rem;
 }
 
 table {
