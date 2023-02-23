@@ -144,7 +144,6 @@ export const getOptionalEmployeesArray = (
 	let optionalEmployeesArray = employees.sort((a, b) => {
 		return a.shifts['8h'] - b.shifts['8h'];
 	});
-	console.log(optionalEmployeesArray);
 	while (numberOfLoopsNeeded > 0) {
 		optionalEmployeesArray = optionalEmployeesArray.map((employee) => {
 			if (numberOfShiftsToSet > 0 && employee.shifts['12h'] > 1) {
