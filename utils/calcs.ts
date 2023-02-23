@@ -141,7 +141,10 @@ export const getOptionalEmployeesArray = (
 ) => {
 	let numberOfShiftsToSet = shiftsNeeded - shiftsAvailable;
 	let numberOfLoopsNeeded = Math.ceil(numberOfShiftsToSet / employees.length);
-	let optionalEmployeesArray = employees;
+	let optionalEmployeesArray = employees.sort((a, b) => {
+		return a.shifts['8h'] - b.shifts['8h'];
+	});
+	console.log(optionalEmployeesArray);
 	while (numberOfLoopsNeeded > 0) {
 		optionalEmployeesArray = optionalEmployeesArray.map((employee) => {
 			if (numberOfShiftsToSet > 0 && employee.shifts['12h'] > 1) {
@@ -159,7 +162,9 @@ export const getOptionalEmployeesArray = (
 		});
 		numberOfLoopsNeeded--;
 	}
-	return optionalEmployeesArray;
+	return optionalEmployeesArray.sort((a, b) => {
+		return +a.name.split(' ')[1] - +b.name.split(' ')[1];
+	});
 };
 
 function distributeMaximumHours(employee: Employee) {
