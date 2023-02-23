@@ -12,12 +12,12 @@ export const getTotalHours = (employees: Employee[]) => {
 export const getShifsDemand = (data: MonthData) => {
 	const shiftsData = {
 		total12hNeeded: (data.d12 + data.n12 + data.k1 + data.k2) * data.monthDays,
-		total10hNeeded: data.k5 * data.monthDays,
-		total8hNeeded: data.d8 * data.monthDays,
+		total10hNeeded: (data.k5 + data.d10) * data.monthDays,
+		total8hNeeded: (data.d8 + data.d + data.k3) * data.monthDays,
 		totalHoursNeeded:
 			(data.d12 + data.n12 + data.k1 + data.k2) * data.monthDays * 12 +
-			data.k5 * data.monthDays * 10 +
-			data.d8 * data.monthDays * 8,
+			(data.k5 + data.d10) * data.monthDays * 10 +
+			(data.d8 + data.d + data.k3) * data.monthDays * 8,
 	};
 	return shiftsData;
 };

@@ -17,9 +17,12 @@ export type Employee = {
 export type ShiftsData = {
 	d12: number;
 	n12: number;
+	d: number;
+	d8: number;
+	d10: number;
 	k1: number;
 	k2: number;
-	d8: number;
+	k3: number;
 	k5: number;
 };
 
@@ -43,8 +46,11 @@ export type InitialEmployeeData = {
 	monthDays: number;
 	d12: number;
 	n12: number;
+	d: number;
+	d8: number;
+	d10: number;
 	k1: number;
 	k2: number;
+	k3: number;
 	k5: number;
-	d8: number;
 };

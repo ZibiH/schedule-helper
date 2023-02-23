@@ -26,18 +26,26 @@ function App() {
 	const daysRef = useRef<HTMLInputElement>(null);
 	const teamleadersCountRef = useRef<HTMLInputElement>(null);
 	const employeesCountRef = useRef<HTMLInputElement>(null);
+
 	const tlD12Ref = useRef<HTMLInputElement>(null);
 	const tlN12Ref = useRef<HTMLInputElement>(null);
 	const tlK1Ref = useRef<HTMLInputElement>(null);
 	const tlK2Ref = useRef<HTMLInputElement>(null);
+	const tlK3Ref = useRef<HTMLInputElement>(null);
 	const tlK5Ref = useRef<HTMLInputElement>(null);
 	const tlD8Ref = useRef<HTMLInputElement>(null);
+	const tlDRef = useRef<HTMLInputElement>(null);
+	const tlD10Ref = useRef<HTMLInputElement>(null);
+
 	const empD12Ref = useRef<HTMLInputElement>(null);
 	const empN12Ref = useRef<HTMLInputElement>(null);
 	const empK1Ref = useRef<HTMLInputElement>(null);
 	const empK2Ref = useRef<HTMLInputElement>(null);
+	const empK3Ref = useRef<HTMLInputElement>(null);
 	const empK5Ref = useRef<HTMLInputElement>(null);
+	const empDRef = useRef<HTMLInputElement>(null);
 	const empD8Ref = useRef<HTMLInputElement>(null);
+	const empD10Ref = useRef<HTMLInputElement>(null);
 
 	const [isDisabled, setIsDisabled] = useState(false);
 
@@ -82,6 +90,9 @@ function App() {
 		k2: 0,
 		d8: 0,
 		k5: 0,
+		k3: 0,
+		d: 0,
+		d10: 0,
 	});
 	const [needEmpOption, setNeedEmpOption] = useState(false);
 
@@ -108,14 +119,21 @@ function App() {
 		if (!tlN12Ref.current?.value) return;
 		if (!tlK1Ref.current?.value) return;
 		if (!tlK2Ref.current?.value) return;
+		if (!tlK3Ref.current?.value) return;
 		if (!tlK5Ref.current?.value) return;
+		if (!tlDRef.current?.value) return;
 		if (!tlD8Ref.current?.value) return;
+		if (!tlD10Ref.current?.value) return;
+
 		if (!empD12Ref.current?.value) return;
 		if (!empN12Ref.current?.value) return;
 		if (!empK1Ref.current?.value) return;
 		if (!empK2Ref.current?.value) return;
+		if (!empK3Ref.current?.value) return;
 		if (!empK5Ref.current?.value) return;
+		if (!empDRef.current?.value) return;
 		if (!empD8Ref.current?.value) return;
+		if (!empD10Ref.current?.value) return;
 
 		setTotalShiftsDemand({
 			d12: +tlD12Ref.current.value + +empD12Ref.current.value,
@@ -124,6 +142,9 @@ function App() {
 			k2: +tlK2Ref.current.value + +empK2Ref.current.value,
 			k5: +tlK5Ref.current.value + +empK5Ref.current.value,
 			d8: +tlD8Ref.current.value + +empD8Ref.current.value,
+			d: +tlDRef.current.value + +empDRef.current.value,
+			d10: +tlD10Ref.current.value + +empD10Ref.current.value,
+			k3: +tlK3Ref.current.value + +empK3Ref.current.value,
 		});
 
 		// TEAMLEADERS DATA
@@ -139,6 +160,9 @@ function App() {
 			k2: +tlK2Ref.current.value,
 			k5: +tlK5Ref.current.value,
 			d8: +tlD8Ref.current.value,
+			d: +tlDRef.current.value,
+			d10: +tlD10Ref.current.value,
+			k3: +tlK3Ref.current.value,
 		};
 
 		const teamleadersDemandData = getShifsDemand(tlShiftsData);
@@ -187,10 +211,13 @@ function App() {
 			monthDays: +daysRef.current.value,
 			d12: +empD12Ref.current.value,
 			n12: +empN12Ref.current.value,
+			d: +empDRef.current.value,
+			d8: +empD8Ref.current.value,
+			d10: +empD10Ref.current.value,
 			k1: +empK1Ref.current.value,
 			k2: +empK2Ref.current.value,
+			k3: +empK3Ref.current.value,
 			k5: +empK5Ref.current.value,
-			d8: +empD8Ref.current.value,
 		};
 
 		const employeesDemandData = getShifsDemand(empShiftsData);
@@ -399,20 +426,31 @@ function App() {
 			<div className="data-container">
 				<form className="form-container" onSubmit={handleShifts}>
 					<div className="form-data">
-						<div className="data-column">
-							<p>dane:</p>
+						<div className="data-column ">
+							<p className="column-header">dane:</p>
+							<div className="spacer"></div>
 							<label htmlFor="hours">Godziny pracy:</label>
 							<input
+								className="general-data"
 								type="number"
 								id="hours"
 								required
 								ref={hoursRef}
 								disabled={isDisabled}
 							/>
+							<div className="spacer"></div>
 							<label htmlFor="days">Dni w miesiącu:</label>
-							<input type="number" id="days" required ref={daysRef} />
+							<input
+								className="general-data"
+								type="number"
+								id="days"
+								required
+								ref={daysRef}
+							/>
+							<div className="spacer"></div>
 							<label htmlFor="teamleaders">Teamleaderzy:</label>
 							<input
+								className="general-data"
 								type="number"
 								id="teamleaders"
 								required
@@ -420,8 +458,10 @@ function App() {
 								max={99}
 								maxLength={2}
 							/>
+							<div className="spacer"></div>
 							<label htmlFor="employees">Pozostali:</label>
 							<input
+								className="general-data"
 								type="number"
 								id="employees"
 								required
@@ -431,135 +471,253 @@ function App() {
 							/>
 						</div>
 						<div className="data-column">
-							<p>Teamleaderzy:</p>
-							<label htmlFor="tlD12psary">D12</label>
-							<input
-								type="number"
-								id="tlD12psary"
-								min={0}
-								defaultValue={1}
-								required
-								ref={tlD12Ref}
-							/>
-							<label htmlFor="tlN12psary">N12</label>
-							<input
-								type="number"
-								id="tlN12psary"
-								min={0}
-								defaultValue={1}
-								required
-								ref={tlN12Ref}
-							/>
-							<label htmlFor="tlK1ktw">K1</label>
-							<input
-								type="number"
-								id="tlK1ktw"
-								min={0}
-								defaultValue={1}
-								required
-								ref={tlK1Ref}
-							/>
-							<label htmlFor="tlK2ktw">K2</label>
-							<input
-								type="number"
-								id="tlK2ktw"
-								min={0}
-								defaultValue={0}
-								required
-								ref={tlK2Ref}
-							/>
-
-							<label htmlFor="tlK5ktw">K5</label>
-							<input
-								type="number"
-								id="tlK5ktw"
-								min={0}
-								defaultValue={0}
-								required
-								ref={tlK5Ref}
-							/>
-
-							<label htmlFor="tlD8ktw">D8</label>
-							<input
-								type="number"
-								id="tlD8ktw"
-								min={0}
-								defaultValue={0}
-								required
-								ref={tlD8Ref}
-							/>
+							<p className="column-header">Teamleaderzy:</p>
+							<div className="spacer"></div>
+							<div className="data-row">
+								<label htmlFor="tlD12psary">D12:</label>
+								<input
+									type="number"
+									id="tlD12psary"
+									min={0}
+									defaultValue={1}
+									required
+									ref={tlD12Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlN12psary">N12:</label>
+								<input
+									type="number"
+									id="tlN12psary"
+									min={0}
+									defaultValue={1}
+									required
+									ref={tlN12Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlDpsary">D:</label>
+								<input
+									type="number"
+									id="tlDpsary"
+									min={0}
+									defaultValue={0}
+									required
+									ref={tlDRef}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlD8psary">D8:</label>
+								<input
+									type="number"
+									id="tlD8psary"
+									min={0}
+									defaultValue={0}
+									required
+									ref={tlD8Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlD10psr">D10:</label>
+								<input
+									type="number"
+									id="tlD10psr"
+									min={0}
+									defaultValue={0}
+									required
+									ref={tlD10Ref}
+								/>
+							</div>
+							<div className="spacer"></div>
+							<div className="data-row">
+								<label htmlFor="tlK1ktw">K1:</label>
+								<input
+									type="number"
+									id="tlK1ktw"
+									min={0}
+									defaultValue={1}
+									required
+									ref={tlK1Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlK2ktw">K2:</label>
+								<input
+									type="number"
+									id="tlK2ktw"
+									min={0}
+									defaultValue={0}
+									required
+									ref={tlK2Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlK3ktw">K3:</label>
+								<input
+									type="number"
+									id="tlK3ktw"
+									min={0}
+									defaultValue={0}
+									required
+									ref={tlK3Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="tlK5ktw">K5:</label>
+								<input
+									type="number"
+									id="tlK5ktw"
+									min={0}
+									defaultValue={0}
+									required
+									ref={tlK5Ref}
+								/>
+							</div>
 						</div>
 						<div className="data-column">
-							<p>Pozostali:</p>
-							<label htmlFor="empD12psary">D12</label>
-							<input
-								type="number"
-								id="empD12psary"
-								min={0}
-								defaultValue={4}
-								required
-								ref={empD12Ref}
-							/>
-							<label htmlFor="empN12psary">N12</label>
-							<input
-								type="number"
-								id="empN12psary"
-								min={0}
-								defaultValue={1}
-								required
-								ref={empN12Ref}
-							/>
-							<label htmlFor="empK1ktw">K1</label>
-							<input
-								type="number"
-								id="empK1ktw"
-								min={0}
-								defaultValue={5}
-								required
-								ref={empK1Ref}
-							/>
-							<label htmlFor="empK2ktw">K2</label>
-							<input
-								type="number"
-								id="empK2ktw"
-								min={0}
-								defaultValue={2}
-								required
-								ref={empK2Ref}
-							/>
-							<label htmlFor="empK5ktw">K5</label>
-							<input
-								type="number"
-								id="empK5ktw"
-								min={0}
-								defaultValue={0}
-								required
-								ref={empK5Ref}
-							/>
-							<label htmlFor="empD8ktw">D8</label>
-							<input
-								type="number"
-								id="empD8ktw"
-								min={0}
-								defaultValue={0}
-								required
-								ref={empD8Ref}
-							/>
+							<p className="column-header">Pozostali:</p>
+							<div className="spacer"></div>
+							<div className="data-row">
+								<label htmlFor="empD12psary">D12:</label>
+								<input
+									type="number"
+									id="empD12psary"
+									min={0}
+									defaultValue={4}
+									required
+									ref={empD12Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empN12psary">N12:</label>
+								<input
+									type="number"
+									id="empN12psary"
+									min={0}
+									defaultValue={1}
+									required
+									ref={empN12Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empDpsary">D:</label>
+								<input
+									type="number"
+									id="empDpsary"
+									min={0}
+									defaultValue={0}
+									required
+									ref={empDRef}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empD8psary">D8:</label>
+								<input
+									type="number"
+									id="empD8psary"
+									min={0}
+									defaultValue={0}
+									required
+									ref={empD8Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empD10psary">D10:</label>
+								<input
+									type="number"
+									id="empD10psary"
+									min={0}
+									defaultValue={0}
+									required
+									ref={empD10Ref}
+								/>
+							</div>
+							<div className="spacer"></div>
+							<div className="data-row">
+								<label htmlFor="empK1ktw">K1:</label>
+								<input
+									type="number"
+									id="empK1ktw"
+									min={0}
+									defaultValue={5}
+									required
+									ref={empK1Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empK2ktw">K2:</label>
+								<input
+									type="number"
+									id="empK2ktw"
+									min={0}
+									defaultValue={2}
+									required
+									ref={empK2Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empK3ktw">K3:</label>
+								<input
+									type="number"
+									id="empK3ktw"
+									min={0}
+									defaultValue={0}
+									required
+									ref={empK3Ref}
+								/>
+							</div>
+							<div className="data-row">
+								<label htmlFor="empK5ktw">K5:</label>
+								<input
+									type="number"
+									id="empK5ktw"
+									min={0}
+									defaultValue={0}
+									required
+									ref={empK5Ref}
+								/>
+							</div>
 						</div>
 						<div className="data-column">
-							<p>total:</p>
-							<p className="summary-title">d12</p>
-							<p className="summary">{totalShiftsDemand.d12}</p>
-							<p className="summary-title">n12</p>
-							<p className="summary">{totalShiftsDemand.n12}</p>
-							<p className="summary-title">k1</p>
-							<p className="summary">{totalShiftsDemand.k1}</p>
-							<p className="summary-title">k2</p>
-							<p className="summary">{totalShiftsDemand.k2}</p>
-							<p className="summary-title">k5</p>
-							<p className="summary">{totalShiftsDemand.k5}</p>
-							<p className="summary-title">d8</p>
-							<p className="summary">{totalShiftsDemand.d8}</p>
+							<p className="column-header">total:</p>
+							<div className="spacer"></div>
+							<div className="data-row">
+								<p className="summary-title">d12:</p>
+								<p className="summary">{totalShiftsDemand.d12}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">n12:</p>
+								<p className="summary">{totalShiftsDemand.n12}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">d:</p>
+								<p className="summary">{totalShiftsDemand.d}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">d8:</p>
+								<p className="summary">{totalShiftsDemand.d8}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">d10:</p>
+								<p className="summary">{totalShiftsDemand.d10}</p>
+							</div>
+							<div className="spacer"></div>
+							<div className="data-row">
+								<p className="summary-title">k1:</p>
+								<p className="summary">{totalShiftsDemand.k1}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">k2:</p>
+								<p className="summary">{totalShiftsDemand.k2}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">k3:</p>
+								<p className="summary">{totalShiftsDemand.k3}</p>
+							</div>
+							<div className="data-row">
+								<p className="summary-title">k5:</p>
+								<p className="summary">{totalShiftsDemand.k5}</p>
+							</div>
 						</div>
 					</div>
 					<button className="submit">OK</button>
