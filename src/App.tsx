@@ -731,7 +731,9 @@ function App() {
 								<td>12h</td>
 								<td>10h</td>
 								<td>8h</td>
-								<td>reszta h</td>
+								<td>1h</td>
+								<td>wolne</td>
+								<td>nadgodziny</td>
 							</tr>
 						</thead>
 						<tbody>
@@ -747,6 +749,8 @@ function App() {
 								<td>
 									{teamleadersShiftsDemand ? teamleadersShiftsDemand.total8hNeeded : 0}
 								</td>
+								<td>x</td>
+								<td>x</td>
 								<td>x</td>
 							</tr>
 							<tr>
@@ -772,30 +776,34 @@ function App() {
 								<td style={needTlOption ? { color: '#c27' } : {}}>
 									{teamleadersShiftsAvailability ? teamleadersShiftsAvailability.add : 0}
 								</td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
+									{teamleadersShiftsAvailability.leave}
+								</td>
+								<td style={needTlOption ? { color: '#c27' } : {}}>
+									{teamleadersShiftsAvailability.over}
+								</td>
 							</tr>
 							{needTlOption ? (
 								<tr>
 									<td>opcja</td>
 									<td className="solution">{teamleadersOptionalAvailableHours}</td>
 									<td className="solution">
-										{teamleadersOptionalShiftsAvailability
-											? teamleadersOptionalShiftsAvailability['12h']
-											: 0}
+										{teamleadersOptionalShiftsAvailability['12h']}
 									</td>
 									<td className="solution">
-										{teamleadersOptionalShiftsAvailability
-											? teamleadersOptionalShiftsAvailability['10h']
-											: 0}
+										{teamleadersOptionalShiftsAvailability['10h']}
 									</td>
 									<td className="solution">
-										{teamleadersOptionalShiftsAvailability
-											? teamleadersOptionalShiftsAvailability['8h']
-											: 0}
+										{teamleadersOptionalShiftsAvailability['8h']}
 									</td>
 									<td className="solution">
-										{teamleadersOptionalShiftsAvailability
-											? teamleadersOptionalShiftsAvailability.add
-											: 0}
+										{teamleadersOptionalShiftsAvailability.add}
+									</td>
+									<td className="solution">
+										{teamleadersOptionalShiftsAvailability.leave}
+									</td>
+									<td className="solution">
+										{teamleadersOptionalShiftsAvailability.over}
 									</td>
 								</tr>
 							) : null}
@@ -810,7 +818,9 @@ function App() {
 								<td>12h</td>
 								<td>10h</td>
 								<td>8h</td>
-								<td>reszta h</td>
+								<td>1h</td>
+								<td>wolne</td>
+								<td>nadgodziny</td>
 							</tr>
 						</thead>
 						<tbody>
@@ -825,6 +835,8 @@ function App() {
 								</td>
 								<td>{employeesShiftsDemand ? employeesShiftsDemand.total8hNeeded : 0}</td>
 								<td>x</td>
+								<td>x</td>
+								<td>x</td>
 							</tr>
 							<tr>
 								<td>dostępne</td>
@@ -832,16 +844,22 @@ function App() {
 									{employeesTotalAvailableHours}
 								</td>
 								<td style={needEmpOption ? { color: '#c27' } : {}}>
-									{employeesShiftsAvailability ? employeesShiftsAvailability['12h'] : 0}
+									{employeesShiftsAvailability['12h']}
 								</td>
 								<td style={needEmpOption ? { color: '#c27' } : {}}>
-									{employeesShiftsAvailability ? employeesShiftsAvailability['10h'] : 0}
+									{employeesShiftsAvailability['10h']}
 								</td>
 								<td style={needEmpOption ? { color: '#c27' } : {}}>
-									{employeesShiftsAvailability ? employeesShiftsAvailability['8h'] : 0}
+									{employeesShiftsAvailability['8h']}
 								</td>
 								<td style={needEmpOption ? { color: '#c27' } : {}}>
-									{employeesShiftsAvailability ? employeesShiftsAvailability.add : 0}
+									{employeesShiftsAvailability.add}
+								</td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
+									{employeesShiftsAvailability.leave}
+								</td>
+								<td style={needEmpOption ? { color: '#c27' } : {}}>
+									{employeesShiftsAvailability.over}
 								</td>
 							</tr>
 							{needEmpOption ? (
@@ -849,25 +867,19 @@ function App() {
 									<td>opcja</td>
 									<td className="solution">{employeesOptionalAvailableHours}</td>
 									<td className="solution">
-										{employeesOptionalShiftsAvailability
-											? employeesOptionalShiftsAvailability['12h']
-											: 0}
+										{employeesOptionalShiftsAvailability['12h']}
 									</td>
 									<td className="solution">
-										{employeesOptionalShiftsAvailability
-											? employeesOptionalShiftsAvailability['10h']
-											: 0}
+										{employeesOptionalShiftsAvailability['10h']}
 									</td>
 									<td className="solution">
-										{employeesOptionalShiftsAvailability
-											? employeesOptionalShiftsAvailability['8h']
-											: 0}
+										{employeesOptionalShiftsAvailability['8h']}
 									</td>
+									<td className="solution">{employeesOptionalShiftsAvailability.add}</td>
 									<td className="solution">
-										{employeesOptionalShiftsAvailability
-											? employeesOptionalShiftsAvailability.add
-											: 0}
+										{employeesOptionalShiftsAvailability.leave}
 									</td>
+									<td className="solution">{employeesOptionalShiftsAvailability.over}</td>
 								</tr>
 							) : null}
 						</tbody>
